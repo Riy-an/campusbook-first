@@ -1,0 +1,94 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Student Registration";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-md-9 col-lg-7">
+        <div class="card card-campus shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <span class="fs-1 d-inline-block mb-1">🎓</span>
+                    <h2 class="h4 fw-bold mb-1">Create Student Account</h2>
+                    <p class="text-muted small">Join your campus book exchange network to share, donate, and find textbooks</p>
+                </div>
+
+                <form asp-controller="Account" asp-action="Register" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label asp-for="FullName" class="form-label fw-semibold small"></label>
+                            <input asp-for="FullName" class="form-control" placeholder="Shahed Bin Hossan Riyan" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="StudentId" class="form-label fw-semibold small"></label>
+                            <input asp-for="StudentId" class="form-control" placeholder="e.g. 23103040" />
+                            <span asp-validation-for="StudentId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label fw-semibold small"></label>
+                            <input asp-for="Email" class="form-control" placeholder="yourid@iubat.edu" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Department" class="form-label fw-semibold small"></label>
+                            <input asp-for="Department" class="form-control" placeholder="e.g. Computer Science & Engineering" />
+                            <span asp-validation-for="Department" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Batch" class="form-label fw-semibold small"></label>
+                            <input asp-for="Batch" class="form-control" placeholder="e.g. Fall 2026 / 54th Batch" />
+                            <span asp-validation-for="Batch" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber" class="form-label fw-semibold small">Contact No. <span class="text-muted fw-normal">(Optional)</span></label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="01XXXXXXXXX (e.g. 01712-345678)" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="StudentIdCard" class="form-label fw-semibold small">University ID Card Photo <span class="badge bg-light text-secondary border fw-normal">Optional</span></label>
+                            <input asp-for="StudentIdCard" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                            <span asp-validation-for="StudentIdCard" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Password" class="form-label fw-semibold small"></label>
+                            <input asp-for="Password" class="form-control" placeholder="Minimum 6 characters" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="ConfirmPassword" class="form-label fw-semibold small"></label>
+                            <input asp-for="ConfirmPassword" class="form-control" placeholder="Repeat password" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border small text-muted my-4 py-2 px-3 rounded-3 d-flex align-items-center gap-2">
+                        <span class="fs-5">ℹ️</span>
+                        <div><strong>Verification Note:</strong> A confirmation link will be generated for your university email address.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-campus w-100 py-2 mb-3 shadow-sm">Register Student Account</button>
+
+                    <div class="text-center small text-muted">
+                        Already have an account? <a asp-action="Login" class="fw-semibold text-primary text-decoration-none">Sign in here</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

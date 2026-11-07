@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CampusBook.DataAccess/CampusBook.DataAccess.csproj" />
+    <Project Path="src/CampusBook.Entities/CampusBook.Entities.csproj" />
+    <Project Path="src/CampusBook.Facade/CampusBook.Facade.csproj" />
+    <Project Path="src/CampusBook.Framework/CampusBook.Framework.csproj" />
+    <Project Path="src/CampusBook.Web.UI/CampusBook.Web.UI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CampusBook.Tests/CampusBook.Tests.csproj" />
+  </Folder>
+</Solution>

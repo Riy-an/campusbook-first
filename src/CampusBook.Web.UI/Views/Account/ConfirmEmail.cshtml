@@ -1,0 +1,37 @@
+@{
+    ViewData["Title"] = "Email Verification";
+    bool success = ViewBag.Success == true;
+    string message = ViewBag.Message as string ?? "Verification result.";
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-md-8 col-lg-6 text-center">
+        <div class="card card-campus shadow-sm p-4 p-md-5">
+            <div class="mb-4">
+                @if (success)
+                {
+                    <span class="display-3 text-success">✅</span>
+                    <h2 class="h4 fw-bold mt-2 text-success">Email Verified!</h2>
+                }
+                else
+                {
+                    <span class="display-3 text-danger">❌</span>
+                    <h2 class="h4 fw-bold mt-2 text-danger">Verification Failed</h2>
+                }
+            </div>
+            <p class="text-muted mb-4">@message</p>
+
+            <div>
+                @if (success)
+                {
+                    <a asp-action="Login" class="btn btn-campus">Proceed to Sign In</a>
+                }
+                else
+                {
+                    <a asp-action="Register" class="btn btn-outline-secondary">Back to Registration</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

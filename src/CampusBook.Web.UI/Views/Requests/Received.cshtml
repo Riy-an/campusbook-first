@@ -1,0 +1,96 @@
+@model IEnumerable<ReceivedRequestViewModel>
+@{
+    ViewData["Title"] = "Requests for My Books";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Incoming Book Requests</h1>
+        <p class="text-muted small mb-0">Review and respond to requests from students interested in your academic books.</p>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card card-campus shadow-sm p-5 text-center text-muted">
+        <span class="fs-1 mb-2">📥</span>
+        <h2 class="h5 fw-bold text-dark mb-1">No Incoming Requests Yet</h2>
+        <p class="small mb-0">When other students request your books, their requests will appear here for you to accept or decline.</p>
+    </div>
+}
+else
+{
+    <div class="card card-campus shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-uppercase">
+                    <tr>
+                        <th>Requested Book</th>
+                        <th>Requesting Student</th>
+                        <th>Offered Book (Trade)</th>
+                        <th>Message</th>
+                        <th>Status</th>
+                        <th>Received Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var request in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Books" asp-action="Details" asp-route-id="@request.BookId" class="fw-bold text-dark text-decoration-none">@request.BookTitle</a>
+                            </td>
+                            <td>
+                                <div><strong>@request.RequesterName</strong></div>
+                                <span class="small text-muted">@request.RequesterDepartment</span>
+                            </td>
+                            <td class="small">
+                                @(request.OfferedBookTitle ?? "-")
+                            </td>
+                            <td class="small text-muted" style="max-width: 250px;">
+                                @(string.IsNullOrEmpty(request.RequestMessage) ? "No message provided." : request.RequestMessage.Truncate(60))
+                            </td>
+                            <td>
+                                <span class="badge @(request.Status switch {
+                                    RequestStatus.Pending => "badge-request-pending",
+                                    RequestStatus.Accepted => "badge-request-accepted",
+                                    RequestStatus.Rejected => "badge-request-rejected",
+                                    RequestStatus.Cancelled => "badge-request-cancelled",
+                                    RequestStatus.Completed => "badge-request-completed",
+                                    _ => "bg-secondary"
+                                })">@request.Status</span>
+
+                                @if (request.Status == RequestStatus.Accepted)
+                                {
+                                    <div class="small text-muted mt-1">
+                                        Handover:
+                                        @(request.OwnerConfirmed ? "✓ You confirmed" : "⏳ Awaiting your confirmation")
+                                    </div>
+                                }
+                            </td>
+                            <td class="small text-muted">@request.CreatedAt.ToDateText()</td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@request.RequestId" class="btn btn-outline-secondary">Details</a>
+                                    @if (request.Status == RequestStatus.Pending)
+                                    {
+                                        <form asp-action="Accept" asp-route-id="@request.RequestId" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-success">Accept</button>
+                                        </form>
+                                        <form asp-action="Reject" asp-route-id="@request.RequestId" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger">Reject</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+

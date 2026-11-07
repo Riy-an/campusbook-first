@@ -1,0 +1,152 @@
+@model BookCreateViewModel
+@{
+    ViewData["Title"] = "Publish Academic Book";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-lg-9">
+        <div class="card card-campus shadow-sm">
+            <div class="card-header bg-white p-4 border-bottom">
+                <h1 class="h4 fw-bold mb-1">Publish Used Academic Book</h1>
+                <p class="text-muted small mb-0">Share textbooks you no longer need with fellow university students for donation, sale, or exchange.</p>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-4"></div>
+
+                    <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">1. Basic Book Information</h2>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label asp-for="Title" class="form-label"></label>
+                            <input asp-for="Title" class="form-control" placeholder="e.g. Introduction to Algorithms (4th Edition)" />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Author" class="form-label"></label>
+                            <input asp-for="Author" class="form-control" placeholder="e.g. Cormen, Leiserson" />
+                            <span asp-validation-for="Author" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Isbn" class="form-label"></label>
+                            <input asp-for="Isbn" class="form-control" placeholder="e.g. 978-0262046305" />
+                            <span asp-validation-for="Isbn" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Edition" class="form-label"></label>
+                            <input asp-for="Edition" class="form-control" placeholder="e.g. 4th Edition, 2022" />
+                            <span asp-validation-for="Edition" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="CourseCode" class="form-label"></label>
+                            <input asp-for="CourseCode" class="form-control" placeholder="e.g. CSE-2201" />
+                            <span asp-validation-for="CourseCode" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">2. Academic Subject & Condition</h2>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="CategoryId" class="form-label"></label>
+                            <select asp-for="CategoryId" class="form-select" asp-items="Model.Categories">
+                                <option value="">-- Select Subject Category --</option>
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DepartmentId" class="form-label"></label>
+                            <select asp-for="DepartmentId" class="form-select" asp-items="Model.Departments">
+                                <option value="">-- Optional: Relevant Department --</option>
+                            </select>
+                            <span asp-validation-for="DepartmentId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Condition" class="form-label"></label>
+                            <select asp-for="Condition" class="form-select">
+                                <option value="New">New (Like new, no marks or tears)</option>
+                                <option value="Good" selected>Good (Minor wear, light pencil notes)</option>
+                                <option value="Fair">Fair (Readable, binding intact, notes/highlights)</option>
+                                <option value="Poor">Poor (Heavily worn or highlighted, all pages intact)</option>
+                            </select>
+                            <span asp-validation-for="Condition" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">3. Exchange Type & Pricing</h2>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="ExchangeType" class="form-label"></label>
+                            <select asp-for="ExchangeType" id="exchangeTypeSelect" class="form-select">
+                                <option value="Donation">Donation (Free gift to fellow student)</option>
+                                <option value="Sale">Sale (Affordable textbook resale)</option>
+                                <option value="Exchange">Book Exchange (Trade for another course book)</option>
+                            </select>
+                            <span asp-validation-for="ExchangeType" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6" id="priceContainer">
+                            <label asp-for="Price" class="form-label"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">৳</span>
+                                <input asp-for="Price" id="priceInput" type="number" step="0.5" min="0" class="form-control" placeholder="0.00" />
+                            </div>
+                            
+                            <small class="text-muted" id="priceHelp">Donation & Exchange listings require ৳0.00 price.</small>
+                        </div>
+                    </div>
+
+                    <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">4. Description & Book Cover</h2>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Mention highlighting, edition details, physical state, and preferred meeting places on campus (e.g. Central Library, cafeteria)..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label asp-for="Image" class="form-label"></label>
+                            <input asp-for="Image" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                            <span asp-validation-for="Image" class="text-danger small"></span>
+                            <small class="text-muted">Allowed formats: JPG, PNG, WEBP. Maximum file size: 2MB.</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-campus px-4 py-2">Publish Book Listing</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function updatePriceInputState() {
+            var type = ৳('#exchangeTypeSelect').val();
+            var priceInput = ৳('#priceInput');
+            if (type === 'Donation' || type === 'Exchange') {
+                priceInput.val('0');
+                priceInput.prop('readonly', true);
+                        ৳('#priceHelp').text(type + ' listings have zero monetary cost.');
+            } else {
+                priceInput.prop('readonly', false);
+                        ৳('#priceHelp').text('Enter an affordable student price in Taka.');
+            }
+        }
+
+        $(document).ready(function() {
+            updatePriceInputState();
+            ৳('#exchangeTypeSelect').change(updatePriceInputState);
+        });
+    </script>
+}
+

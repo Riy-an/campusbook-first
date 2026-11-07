@@ -1,0 +1,189 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Student Exchange Dashboard";
+}
+
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="h3 fw-bold mb-1">Welcome back, @Model.StudentName!</h1>
+        <p class="text-muted small mb-0">Student ID: <strong>@Model.StudentId</strong> &bull; Department: <strong>@Model.Department</strong></p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a asp-controller="Books" asp-action="Create" class="btn btn-campus d-inline-flex align-items-center gap-2">
+            <span>+</span> Publish New Book
+        </a>
+    </div>
+</div>
+
+<!-- 5 Real Database Metric Cards -->
+<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-5 g-3 mb-5">
+    <div class="col">
+        <div class="stat-card shadow-sm h-100">
+            <div>
+                <div class="stat-number text-primary">@Model.ActiveListingsCount</div>
+                <div class="stat-label">Active Listings</div>
+            </div>
+            <span class="fs-2 text-primary opacity-50">📚</span>
+        </div>
+    </div>
+    <div class="col">
+        <div class="stat-card shadow-sm h-100">
+            <div>
+                <div class="stat-number text-warning">@Model.ReservedListingsCount</div>
+                <div class="stat-label">Reserved Books</div>
+            </div>
+            <span class="fs-2 text-warning opacity-50">⏳</span>
+        </div>
+    </div>
+    <div class="col">
+        <div class="stat-card shadow-sm h-100">
+            <div>
+                <div class="stat-number text-info">@Model.PendingReceivedRequestsCount</div>
+                <div class="stat-label">Incoming Requests</div>
+            </div>
+            <span class="fs-2 text-info opacity-50">📥</span>
+        </div>
+    </div>
+    <div class="col">
+        <div class="stat-card shadow-sm h-100">
+            <div>
+                <div class="stat-number text-secondary">@Model.PendingSentRequestsCount</div>
+                <div class="stat-label">Sent Requests</div>
+            </div>
+            <span class="fs-2 text-secondary opacity-50">📤</span>
+        </div>
+    </div>
+    <div class="col">
+        <div class="stat-card shadow-sm h-100">
+            <div>
+                <div class="stat-number text-success">@Model.CompletedExchangesCount</div>
+                <div class="stat-label">Exchanges Done</div>
+            </div>
+            <span class="fs-2 text-success opacity-50">✅</span>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Navigation Bar -->
+<div class="card card-campus shadow-sm p-4 mb-5">
+    <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">Quick Navigation</h2>
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-2 text-center">
+        <div class="col">
+            <a asp-controller="Books" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+                <span class="fs-4 d-block mb-1">🔍</span>
+                <span class="small fw-semibold">Browse Books</span>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Books" asp-action="MyBooks" class="btn btn-outline-secondary w-100 py-3">
+                <span class="fs-4 d-block mb-1">📖</span>
+                <span class="small fw-semibold">My Books</span>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Books" asp-action="Create" class="btn btn-outline-secondary w-100 py-3">
+                <span class="fs-4 d-block mb-1">➕</span>
+                <span class="small fw-semibold">Add a Book</span>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Requests" asp-action="Sent" class="btn btn-outline-secondary w-100 py-3">
+                <span class="fs-4 d-block mb-1">📤</span>
+                <span class="small fw-semibold">Sent Requests</span>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Requests" asp-action="Received" class="btn btn-outline-secondary w-100 py-3">
+                <span class="fs-4 d-block mb-1">📥</span>
+                <span class="small fw-semibold">Book Requests</span>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Profile" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+                <span class="fs-4 d-block mb-1">👤</span>
+                <span class="small fw-semibold">My Profile</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Two Columns: Recent Incoming Requests & Recent Listings -->
+<div class="row g-4">
+    <!-- Left Column: Pending Incoming Requests -->
+    <div class="col-lg-6">
+        <div class="card card-campus shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h2 class="h6 fw-bold mb-0">Incoming Requests (@Model.PendingReceivedRequestsCount Pending)</h2>
+                <a asp-controller="Requests" asp-action="Received" class="small text-decoration-none">View All</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.RecentIncomingRequests.Any())
+                {
+                    <div class="p-4 text-center text-muted small">
+                        No pending requests for your books at this moment.
+                    </div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush small">
+                        @foreach (var req in Model.RecentIncomingRequests)
+                        {
+                            <li class="list-group-item p-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">@req.BookTitle</div>
+                                    <span class="text-muted">From <strong>@req.RequesterName</strong> (@req.RequesterDepartment)</span>
+                                    <span class="badge @(req.Status switch {
+                                        RequestStatus.Pending => "badge-request-pending",
+                                        RequestStatus.Accepted => "badge-request-accepted",
+                                        _ => "bg-secondary"
+                                    }) ms-1">@req.Status</span>
+                                </div>
+                                <a asp-controller="Requests" asp-action="Details" asp-route-id="@req.RequestId" class="btn btn-sm btn-outline-primary">Review</a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: My Recent Listings -->
+    <div class="col-lg-6">
+        <div class="card card-campus shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h2 class="h6 fw-bold mb-0">My Recent Book Listings</h2>
+                <a asp-controller="Books" asp-action="MyBooks" class="small text-decoration-none">View All</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.RecentListings.Any())
+                {
+                    <div class="p-4 text-center text-muted small">
+                        You have not published any books yet.
+                    </div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush small">
+                        @foreach (var book in Model.RecentListings)
+                        {
+                            <li class="list-group-item p-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">@book.Title</div>
+                                    <span class="text-muted">@book.Price.ToPriceText() &bull; Condition: @book.Condition</span>
+                                    <span class="badge @(book.Status switch {
+                                        BookStatus.Available => "badge-status-available",
+                                        BookStatus.Reserved => "badge-status-reserved",
+                                        BookStatus.Completed => "badge-status-completed",
+                                        _ => "badge-status-inactive"
+                                    }) ms-1">@book.Status</span>
+                                </div>
+                                <a asp-controller="Books" asp-action="Details" asp-route-id="@book.BookId" class="btn btn-sm btn-outline-secondary">View</a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

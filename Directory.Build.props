@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <UseSharedCompilation>false</UseSharedCompilation>
+    <NoWarn>$(NoWarn);NU1902;NU1903</NoWarn>
+  </PropertyGroup>
+</Project>

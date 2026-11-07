@@ -1,0 +1,56 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Student Sign In";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-md-6 col-lg-5">
+        <div class="card card-campus shadow-sm">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <span class="fs-1">📚</span>
+                    <h2 class="h4 fw-bold mt-2">Student Sign In</h2>
+                    <p class="text-muted small">Access your CampusBook exchange account</p>
+                </div>
+
+                <form asp-controller="Account" asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="ReturnUrl" />
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" placeholder="name@university.edu" autocomplete="username" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <label asp-for="Password" class="form-label"></label>
+                            <a asp-action="ForgotPassword" class="small text-decoration-none">Forgot password?</a>
+                        </div>
+                        <input asp-for="Password" class="form-control" placeholder="••••••••" autocomplete="current-password" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label small text-muted"></label>
+                    </div>
+
+                    <button type="submit" class="btn btn-campus w-100 py-2 mb-3">Sign In</button>
+
+                    <div class="text-center small text-muted">
+                        New student? <a asp-action="Register" class="fw-bold text-decoration-none">Register here</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

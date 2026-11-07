@@ -1,0 +1,162 @@
+@model ProfileDetailsViewModel
+@{
+    ViewData["Title"] = "My Student Profile";
+}
+
+<div class="row g-4">
+    <!-- Left Column: Profile Card -->
+    <div class="col-lg-4">
+        <div class="card card-campus shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="mb-3 d-flex justify-content-center">
+                    @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+                    {
+                        <img src="@Model.ProfilePictureUrl" alt="@Model.FullName" class="profile-avatar-lg" />
+                    }
+                    else
+                    {
+                        <div class="profile-avatar-placeholder-lg">
+                            @Model.FullName.FirstOrDefault()
+                        </div>
+                    }
+                </div>
+
+                <h1 class="h4 fw-bold mb-1">@Model.FullName</h1>
+                <p class="text-muted small mb-2">Student ID: <strong>@Model.StudentId</strong></p>
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    <span class="badge bg-primary">@Model.RoleName</span>
+                    @if (Model.IsEmailConfirmed)
+                    {
+                        <span class="badge bg-success">Verified Email</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">Unverified Email</span>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Bio))
+                {
+                    <p class="small text-muted border-top border-bottom py-3 my-3 text-start">
+                        @Model.Bio
+                    </p>
+                }
+
+                <div class="d-grid mt-3">
+                    <a asp-action="Edit" class="btn btn-campus-outline">Edit Profile</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic & Contact Info Card -->
+        <div class="card card-campus shadow-sm mt-4">
+            <div class="card-header bg-white fw-bold">Academic Details</div>
+            <ul class="list-group list-group-flush small">
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">University Email:</span>
+                    <span class="fw-semibold">@Model.Email</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Department:</span>
+                    <span class="fw-semibold">@Model.Department</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Batch / Intake:</span>
+                    <span class="fw-semibold">@Model.Batch</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Semester:</span>
+                    <span class="fw-semibold">@(Model.Semester ?? "Not specified")</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Contact Phone:</span>
+                    <span class="fw-semibold">@(Model.PhoneNumber ?? "Not specified")</span>
+                </li>
+                @if (!string.IsNullOrEmpty(Model.StudentIdCardUrl))
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Student ID Card:</span>
+                        <a href="@Model.StudentIdCardUrl" target="_blank" class="badge bg-light text-primary border text-decoration-none py-1 px-2">
+                            View ID Card ↗
+                        </a>
+                    </li>
+                }
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="text-muted">Member Since:</span>
+                    <span class="fw-semibold">@Model.CreatedAt.ToDateText()</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Right Column: My Listings -->
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 fw-bold mb-0">My Published Book Listings (@Model.MyListings.Count())</h2>
+            <a asp-controller="Books" asp-action="Create" class="btn btn-sm btn-campus">+ Add Book</a>
+        </div>
+
+        @if (!Model.MyListings.Any())
+        {
+            <div class="card card-campus shadow-sm p-5 text-center text-muted">
+                <span class="fs-1 mb-2">📚</span>
+                <p class="mb-3">You have not published any book listings yet.</p>
+                <div>
+                    <a asp-controller="Books" asp-action="Create" class="btn btn-campus btn-sm">Publish Your First Book</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-md-2 g-3">
+                @foreach (var book in Model.MyListings)
+                {
+                    <div class="col">
+                        <div class="card card-campus h-100 shadow-sm">
+                            <div class="book-cover-container" style="height: 160px;">
+                                @if (!string.IsNullOrEmpty(book.ImageUrl))
+                                {
+                                    <img src="@book.ImageUrl" alt="@book.Title" class="book-cover-img" />
+                                }
+                                else
+                                {
+                                    <div class="book-cover-placeholder">
+                                        <span class="fs-2">📖</span>
+                                        <span class="small">No Cover Image</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge @(book.ExchangeType switch {
+                                        ExchangeType.Donation => "badge-type-donation",
+                                        ExchangeType.Sale => "badge-type-sale",
+                                        _ => "badge-type-exchange"
+                                    })">@book.ExchangeType</span>
+
+                                    <span class="badge @(book.Status switch {
+                                        BookStatus.Available => "badge-status-available",
+                                        BookStatus.Reserved => "badge-status-reserved",
+                                        BookStatus.Completed => "badge-status-completed",
+                                        _ => "badge-status-inactive"
+                                    })">@book.Status</span>
+                                </div>
+                                <h3 class="h6 fw-bold mb-1 text-truncate">@book.Title</h3>
+                                <p class="small text-muted mb-2 text-truncate">by @book.Author</p>
+                                <div class="fw-bold text-primary mb-3">@book.Price.ToPriceText()</div>
+                                <div class="d-flex gap-2">
+                                    <a asp-controller="Books" asp-action="Details" asp-route-id="@book.BookId" class="btn btn-sm btn-outline-secondary w-50">View</a>
+                                    @if (book.Status != BookStatus.Reserved && book.Status != BookStatus.Completed)
+                                    {
+                                        <a asp-controller="Books" asp-action="Edit" asp-route-id="@book.BookId" class="btn btn-sm btn-outline-primary w-50">Edit</a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+

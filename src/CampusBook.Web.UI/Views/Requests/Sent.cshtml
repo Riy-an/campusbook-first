@@ -1,0 +1,114 @@
+@model IEnumerable<SentRequestViewModel>
+@{
+    ViewData["Title"] = "My Sent Requests";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">My Sent Book Requests</h1>
+        <p class="text-muted small mb-0">Track textbook requests you have submitted to fellow student book owners.</p>
+    </div>
+    <a asp-controller="Books" asp-action="Index" class="btn btn-campus btn-sm">Find More Books</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card card-campus shadow-sm p-5 text-center text-muted">
+        <span class="fs-1 mb-2">📬</span>
+        <h2 class="h5 fw-bold text-dark mb-1">No Outgoing Requests</h2>
+        <p class="small mb-3">You haven't requested any books yet. Browse the university catalogue to find textbooks for your courses!</p>
+        <div>
+            <a asp-controller="Books" asp-action="Index" class="btn btn-campus btn-sm">Browse Catalogue</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card card-campus shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-uppercase">
+                    <tr>
+                        <th style="width: 60px;">Cover</th>
+                        <th>Requested Book</th>
+                        <th>Owner</th>
+                        <th>Listing Type</th>
+                        <th>Offered Book</th>
+                        <th>Request Status</th>
+                        <th>Date Sent</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var request in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(request.BookImageUrl))
+                                {
+                                    <img src="@request.BookImageUrl" alt="@request.BookTitle" style="width: 45px; height: 60px; object-fit: cover; border-radius: 4px;" />
+                                }
+                                else
+                                {
+                                    <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="width: 45px; height: 60px; border-radius: 4px;">
+                                        📖
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <a asp-controller="Books" asp-action="Details" asp-route-id="@request.BookId" class="fw-bold text-dark text-decoration-none d-block">@request.BookTitle</a>
+                                <span class="small text-muted">by @request.BookAuthor</span>
+                            </td>
+                            <td class="small">
+                                <strong>@request.OwnerName</strong>
+                            </td>
+                            <td>
+                                <span class="badge @(request.ExchangeType switch {
+                                    ExchangeType.Donation => "badge-type-donation",
+                                    ExchangeType.Sale => "badge-type-sale",
+                                    _ => "badge-type-exchange"
+                                })">@request.ExchangeType</span>
+                                <div class="small fw-semibold text-primary">@request.Price.ToPriceText()</div>
+                            </td>
+                            <td class="small">
+                                @(request.OfferedBookTitle ?? "-")
+                            </td>
+                            <td>
+                                <span class="badge @(request.Status switch {
+                                    RequestStatus.Pending => "badge-request-pending",
+                                    RequestStatus.Accepted => "badge-request-accepted",
+                                    RequestStatus.Rejected => "badge-request-rejected",
+                                    RequestStatus.Cancelled => "badge-request-cancelled",
+                                    RequestStatus.Completed => "badge-request-completed",
+                                    _ => "bg-secondary"
+                                })">@request.Status</span>
+
+                                @if (request.Status == RequestStatus.Accepted)
+                                {
+                                    <div class="small text-muted mt-1">
+                                        Handover:
+                                        @(request.RequesterConfirmed ? "✓ You confirmed" : "⏳ Awaiting your confirmation")
+                                    </div>
+                                }
+                            </td>
+                            <td class="small text-muted">@request.CreatedAt.ToDateText()</td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@request.RequestId" class="btn btn-outline-secondary">Details</a>
+                                    @if (request.Status == RequestStatus.Pending)
+                                    {
+                                        <form asp-action="Cancel" asp-route-id="@request.RequestId" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this pending request?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger">Cancel</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+

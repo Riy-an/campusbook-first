@@ -1,0 +1,244 @@
+@model RequestDetailsViewModel
+@{
+    ViewData["Title"] = $"Request #{Model.RequestId} - {Model.BookTitle}";
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                @if (Model.IsOwner)
+                {
+                    <li class="breadcrumb-item"><a asp-action="Received">Requests for My Books</a></li>
+                }
+                else
+                {
+                    <li class="breadcrumb-item"><a asp-action="Sent">My Sent Requests</a></li>
+                }
+                <li class="breadcrumb-item active" aria-current="page">Request #@Model.RequestId</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="card card-campus shadow-sm p-4 p-md-5 mb-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 border-bottom pb-3 mb-4">
+        <div>
+            <div class="text-muted small">Exchange Request #@Model.RequestId &bull; Submitted @Model.CreatedAt.ToDateTimeText()</div>
+            <h1 class="h4 fw-bold mb-0">@Model.BookTitle</h1>
+        </div>
+        <div>
+            <span class="badge fs-6 px-3 py-2 @(Model.Status switch {
+                RequestStatus.Pending => "badge-request-pending",
+                RequestStatus.Accepted => "badge-request-accepted",
+                RequestStatus.Rejected => "badge-request-rejected",
+                RequestStatus.Cancelled => "badge-request-cancelled",
+                RequestStatus.Completed => "badge-request-completed",
+                _ => "bg-secondary"
+            })">@Model.Status</span>
+        </div>
+    </div>
+
+    <!-- Handover Progress Tracking Banner (When Accepted or Completed) -->
+    @if (Model.Status == RequestStatus.Accepted || Model.Status == RequestStatus.Completed)
+    {
+        <div class="card bg-light border-primary-subtle mb-4">
+            <div class="card-body p-4">
+                <h2 class="h6 fw-bold text-primary mb-3">🤝 Physical Handover & Exchange Confirmation</h2>
+
+                @if (Model.Status == RequestStatus.Accepted)
+                {
+                    <p class="small text-muted mb-3">
+                        This request is accepted and the book is currently reserved.
+                        Please meet on campus to exchange the book. Once handed over, both parties must confirm below to finalize this transaction.
+                    </p>
+                }
+                else
+                {
+                    <div class="alert alert-success py-2 small mb-3">
+                        🎉 Exchange Completed! Both students have confirmed the physical handover. The listings have been finalized.
+                    </div>
+                }
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-white rounded border d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="small text-muted d-block">Book Owner (@Model.OwnerName)</span>
+                                <strong>@(Model.OwnerConfirmed ? "✓ Handover Confirmed" : "⏳ Awaiting Confirmation")</strong>
+                                @if (Model.OwnerConfirmedAt.HasValue)
+                                {
+                                    <div class="small text-muted">@Model.OwnerConfirmedAt.Value.ToDateTimeText()</div>
+                                }
+                            </div>
+                            @if (Model.IsOwner && !Model.OwnerConfirmed && Model.Status == RequestStatus.Accepted)
+                            {
+                                <form asp-action="ConfirmHandover" asp-route-id="@Model.RequestId" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-success">Confirm Handover</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 bg-white rounded border d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="small text-muted d-block">Requesting Student (@Model.RequesterName)</span>
+                                <strong>@(Model.RequesterConfirmed ? "✓ Receipt Confirmed" : "⏳ Awaiting Confirmation")</strong>
+                                @if (Model.RequesterConfirmedAt.HasValue)
+                                {
+                                    <div class="small text-muted">@Model.RequesterConfirmedAt.Value.ToDateTimeText()</div>
+                                }
+                            </div>
+                            @if (Model.IsRequester && !Model.RequesterConfirmed && Model.Status == RequestStatus.Accepted)
+                            {
+                                <form asp-action="ConfirmHandover" asp-route-id="@Model.RequestId" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-success">Confirm Receipt</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Coordinates (Visible once Accepted) -->
+                <div class="mt-3 pt-3 border-top small">
+                    <strong>Exchange Contact Info:</strong>
+                    @if (Model.IsOwner)
+                    {
+                        <span>Requesting student email: <code>@Model.RequesterEmail</code></span>
+                    }
+                    else
+                    {
+                        <span>Book owner email: <code>@Model.OwnerEmail</code></span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Request Details Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Requested Book Column -->
+        <div class="col-md-6">
+            <div class="card h-100 border">
+                <div class="card-header bg-white fw-bold">Requested Book</div>
+                <div class="card-body">
+                    <div class="d-flex gap-3 mb-3">
+                        @if (!string.IsNullOrEmpty(Model.BookImageUrl))
+                        {
+                            <img src="@Model.BookImageUrl" alt="@Model.BookTitle" style="width: 70px; height: 95px; object-fit: cover; border-radius: 4px;" />
+                        }
+                        else
+                        {
+                            <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="width: 70px; height: 95px; border-radius: 4px;">
+                                📖
+                            </div>
+                        }
+                        <div>
+                            <h3 class="h6 fw-bold mb-1">
+                                <a asp-controller="Books" asp-action="Details" asp-route-id="@Model.BookId" class="text-dark text-decoration-none">@Model.BookTitle</a>
+                            </h3>
+                            <div class="small text-muted mb-1">by @Model.BookAuthor</div>
+                            <span class="badge @(Model.ExchangeType switch {
+                                ExchangeType.Donation => "badge-type-donation",
+                                ExchangeType.Sale => "badge-type-sale",
+                                _ => "badge-type-exchange"
+                            })">@Model.ExchangeType</span>
+                            <div class="fw-bold text-primary small mt-1">@Model.Price.ToPriceText()</div>
+                        </div>
+                    </div>
+                    <div class="small text-muted">
+                        Listed by: <strong>@Model.OwnerName</strong> (@Model.OwnerDepartment)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Offered Book or Trade Info -->
+        <div class="col-md-6">
+            <div class="card h-100 border">
+                <div class="card-header bg-white fw-bold">Offered in Return</div>
+                <div class="card-body">
+                    @if (Model.OfferedBookId.HasValue && !string.IsNullOrEmpty(Model.OfferedBookTitle))
+                    {
+                        <div class="d-flex gap-3 mb-3">
+                            @if (!string.IsNullOrEmpty(Model.OfferedBookImageUrl))
+                            {
+                                <img src="@Model.OfferedBookImageUrl" alt="@Model.OfferedBookTitle" style="width: 70px; height: 95px; object-fit: cover; border-radius: 4px;" />
+                            }
+                            else
+                            {
+                                <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="width: 70px; height: 95px; border-radius: 4px;">
+                                    🔄
+                                </div>
+                            }
+                            <div>
+                                <span class="badge badge-type-exchange mb-1">Offered Trade Book</span>
+                                <h3 class="h6 fw-bold mb-1">@Model.OfferedBookTitle</h3>
+                                <div class="small text-muted">by @(Model.OfferedBookAuthor ?? "Author")</div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted small p-3 text-center">
+                            @(Model.ExchangeType == ExchangeType.Donation ? "Donation request (no trade book required)." : "Sale listing (monetary transaction upon campus meetup).")
+                        </div>
+                    }
+
+                    <div class="small text-muted mt-2 border-top pt-2">
+                        Requester: <strong>@Model.RequesterName</strong> &bull; @Model.RequesterDepartment (@Model.RequesterBatch)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Message -->
+    @if (!string.IsNullOrEmpty(Model.RequestMessage))
+    {
+        <div class="mb-4">
+            <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-2">Message from Requester</h2>
+            <div class="p-3 bg-light rounded border text-secondary" style="white-space: pre-line;">
+                @Model.RequestMessage
+            </div>
+        </div>
+    }
+
+    <!-- Bottom Actions Toolbar -->
+    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+        @if (Model.IsOwner)
+        {
+            <a asp-action="Received" class="btn btn-outline-secondary">&larr; Back to Received Requests</a>
+
+            @if (Model.Status == RequestStatus.Pending)
+            {
+                <div class="d-flex gap-2">
+                    <form asp-action="Reject" asp-route-id="@Model.RequestId" method="post" onsubmit="return confirm('Are you sure you want to decline this request?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger">Decline Request</button>
+                    </form>
+                    <form asp-action="Accept" asp-route-id="@Model.RequestId" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success px-4">Accept Request & Reserve Book</button>
+                    </form>
+                </div>
+            }
+        }
+        else
+        {
+            <a asp-action="Sent" class="btn btn-outline-secondary">&larr; Back to Sent Requests</a>
+
+            @if (Model.Status == RequestStatus.Pending)
+            {
+                <form asp-action="Cancel" asp-route-id="@Model.RequestId" method="post" onsubmit="return confirm('Are you sure you want to cancel this request?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger">Cancel Request</button>
+                </form>
+            }
+        }
+    </div>
+</div>
+

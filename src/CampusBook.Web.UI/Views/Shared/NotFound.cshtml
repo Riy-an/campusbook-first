@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Page Not Found";
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-md-8 col-lg-6 text-center">
+        <div class="mb-4">
+            <span class="display-1 text-muted">🔍</span>
+        </div>
+        <h1 class="display-4 fw-bold text-dark">404</h1>
+        <h2 class="h4 text-muted mb-4">Resource or Page Not Found</h2>
+        <p class="text-muted mb-4">The book listing, student profile, or request you are looking for does not exist or has been removed.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a asp-controller="Books" asp-action="Index" class="btn btn-campus">Browse Books</a>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Go to Home</a>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,34 @@
+@{
+    ViewData["Title"] = "Registration Confirmation";
+    var devLink = ViewBag.DevConfirmationLink as string;
+    var email = ViewBag.RegisteredEmail as string;
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-md-8 col-lg-6 text-center">
+        <div class="card card-campus shadow-sm p-4 p-md-5">
+            <div class="mb-4">
+                <span class="display-3 text-success">✉️</span>
+            </div>
+            <h2 class="h4 fw-bold mb-3">Verification Email Dispatched</h2>
+            <p class="text-muted mb-4">
+                We've sent an email verification link to <strong>@(email ?? "your email address")</strong>.
+                Please check your inbox and click the verification link to activate your student exchange account.
+            </p>
+
+            @if (!string.IsNullOrEmpty(devLink))
+            {
+                <div class="alert alert-warning text-start mb-4">
+                    <div class="fw-bold mb-1">🛠️ Development Environment Verification Link:</div>
+                    <div class="small text-muted mb-2">Since this application is running in local development mode, click below to confirm your account immediately:</div>
+                    <a href="@devLink" class="btn btn-sm btn-outline-dark text-break">Confirm Email Now</a>
+                </div>
+            }
+
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-action="Login" class="btn btn-campus">Proceed to Sign In</a>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,159 @@
+@model BookDetailsViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a asp-action="Index">Catalogue</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Title.Truncate(35)</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="card card-campus shadow-sm p-4 p-md-5 mb-5">
+    <div class="row g-5">
+        <!-- Book Cover Image Column -->
+        <div class="col-md-5 col-lg-4 text-center">
+            <div class="book-cover-container rounded-3 shadow-sm mb-3" style="height: 350px;">
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl" alt="@Model.Title" class="book-cover-img" />
+                }
+                else
+                {
+                    <div class="book-cover-placeholder">
+                        <span class="display-3">📖</span>
+                        <span class="text-muted mt-2">No Image Provided</span>
+                    </div>
+                }
+            </div>
+
+            <!-- Price & Exchange Type Box -->
+            <div class="p-3 bg-light rounded-3 border text-center mb-3">
+                <div class="text-muted small text-uppercase fw-semibold mb-1">Exchange Option</div>
+                <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
+                    <span class="badge fs-6 @(Model.ExchangeType switch {
+                        ExchangeType.Donation => "badge-type-donation",
+                        ExchangeType.Sale => "badge-type-sale",
+                        _ => "badge-type-exchange"
+                    })">@Model.ExchangeType</span>
+
+                    <span class="fs-5 fw-bold text-primary">@Model.Price.ToPriceText()</span>
+                </div>
+
+                <div class="small">
+                    Status: <span class="badge @(Model.Status switch {
+                        BookStatus.Available => "badge-status-available",
+                        BookStatus.Reserved => "badge-status-reserved",
+                        BookStatus.Completed => "badge-status-completed",
+                        _ => "badge-status-inactive"
+                    })">@Model.Status</span>
+                </div>
+            </div>
+
+            <!-- Request Action Box -->
+            <div class="d-grid gap-2">
+                @if (!Model.IsViewerAuthenticated)
+                {
+                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-campus py-2">
+                        Sign In to Request
+                    </a>
+                    <small class="text-muted">You must be a signed-in university student to request books.</small>
+                }
+                else if (Model.IsOwner)
+                {
+                    <div class="alert alert-info py-2 small mb-2 text-center">
+                        👤 You are the owner of this book listing.
+                    </div>
+                    @if (Model.Status != BookStatus.Reserved && Model.Status != BookStatus.Completed)
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.BookId" class="btn btn-outline-primary btn-sm">Edit Listing</a>
+                    }
+                }
+                else if (Model.HasActiveRequest)
+                {
+                    <div class="alert alert-warning py-2 small mb-2 text-center">
+                        ⏳ You have already submitted an active request for this book.
+                    </div>
+                    <a asp-controller="Requests" asp-action="Sent" class="btn btn-campus-outline btn-sm">View Sent Requests</a>
+                }
+                else if (Model.Status != BookStatus.Available)
+                {
+                    <button class="btn btn-secondary py-2" disabled>Listing Unavailable</button>
+                    <small class="text-muted">This book has already been reserved or completed by another student.</small>
+                }
+                else
+                {
+                    <a asp-controller="Requests" asp-action="Create" asp-route-bookId="@Model.BookId" class="btn btn-campus py-2 fs-6">
+                        Request This Book
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Book Details Information Column -->
+        <div class="col-md-7 col-lg-8">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge @(Model.Condition switch {
+                    BookCondition.New => "badge-condition-new",
+                    BookCondition.Good => "badge-condition-good",
+                    BookCondition.Fair => "badge-condition-fair",
+                    _ => "badge-condition-poor"
+                })">Condition: @Model.Condition</span>
+
+                <span class="text-muted small">Listed @Model.CreatedAt.ToDateText()</span>
+            </div>
+
+            <h1 class="h3 fw-bold text-dark mb-2">@Model.Title</h1>
+            <p class="fs-6 text-muted mb-4">by <strong>@Model.Author</strong></p>
+
+            <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">Book Information</h2>
+            <div class="row g-3 mb-4 small">
+                <div class="col-sm-6">
+                    <span class="text-muted d-block">Academic Category:</span>
+                    <strong class="text-dark">@Model.CategoryName</strong>
+                </div>
+                <div class="col-sm-6">
+                    <span class="text-muted d-block">Relevant Department:</span>
+                    <strong class="text-dark">@(Model.DepartmentName ?? "General / Interdisciplinary")</strong>
+                </div>
+                <div class="col-sm-6">
+                    <span class="text-muted d-block">Course Code:</span>
+                    <strong class="text-dark">@(Model.CourseCode ?? "Not specified")</strong>
+                </div>
+                <div class="col-sm-6">
+                    <span class="text-muted d-block">Edition / Publication Year:</span>
+                    <strong class="text-dark">@(Model.Edition ?? "Not specified")</strong>
+                </div>
+                <div class="col-sm-6">
+                    <span class="text-muted d-block">ISBN:</span>
+                    <strong class="text-dark">@(Model.Isbn ?? "Not specified")</strong>
+                </div>
+            </div>
+
+            <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">Description & Condition Notes</h2>
+            <div class="p-3 bg-light rounded-3 mb-4 text-secondary" style="white-space: pre-line;">
+                @Model.Description
+            </div>
+
+            <!-- Owner Information Box -->
+            <div class="card bg-white border rounded-3 p-3 mt-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold d-block">Book Listed By</span>
+                        <h3 class="h6 fw-bold mb-0">@Model.OwnerName</h3>
+                        <span class="small text-muted">@Model.OwnerDepartment &bull; @Model.OwnerBatch</span>
+                    </div>
+                    <a asp-controller="Profile" asp-action="View" asp-route-id="@Model.OwnerId" class="btn btn-sm btn-outline-secondary">
+                        View Student Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
