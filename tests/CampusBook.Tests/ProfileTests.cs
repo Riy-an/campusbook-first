@@ -4,6 +4,7 @@ using CampusBook.Entities;
 using CampusBook.Facade.Implementation;
 using CampusBook.Facade.Services;
 using CampusBook.Facade.ViewModels.Profile;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
@@ -12,6 +13,14 @@ namespace CampusBook.Tests;
 
 public class ProfileTests
 {
+    private static IFormFile CreateMockFile(string fileName)
+    {
+        var mock = new Mock<IFormFile>();
+        mock.Setup(f => f.Length).Returns(2048);
+        mock.Setup(f => f.FileName).Returns(fileName);
+        return mock.Object;
+    }
+
     private (StudentProfileFacade facade, ApplicationDbContext context, User student) SetupProfileEnvironment(string dbName)
     {
         var context = TestDbContextFactory.Create(dbName);
@@ -20,6 +29,12 @@ public class ProfileTests
         var bookRepo = new BookRepository(context);
         var requestRepo = new BookRequestRepository(context);
         var fileStorageMock = new Mock<IFileStorageService>();
+
+        string? error;
+        fileStorageMock.Setup(s => s.IsValidImage(It.IsAny<IFormFile>(), out error)).Returns(true);
+        fileStorageMock.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>()))
+            .ReturnsAsync("/uploads/idcards/updated_card.jpg");
+
         var logger = NullLogger<StudentProfileFacade>.Instance;
 
         var student = new User
@@ -121,5 +136,81 @@ public class ProfileTests
         Assert.Equal("Loving compilers and programming languages.", publicProfile.Bio);
         // Notice PublicProfileViewModel does NOT even have Email or PhoneNumber properties,
         // strictly enforcing privacy at the DTO contract boundary!
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_WhenChangingIdCardUnderLimit_SucceedsAndIncrementsCount()
+    {
+        // Arrange
+        var (facade, context, student) = SetupProfileEnvironment(Guid.NewGuid().ToString());
+        var editModel = new ProfileEditViewModel
+        {
+            FullName = student.FullName,
+            Department = "Computer Science",
+            Batch = "Fall 2026",
+            StudentIdCard = CreateMockFile("new_card.jpg")
+        };
+
+        // Act
+        var result = await facade.UpdateProfileAsync(student.UserId, editModel);
+
+        // Assert
+        Assert.True(result.Success);
+        var refreshed = await context.Users.FindAsync(student.UserId);
+        Assert.NotNull(refreshed?.StudentProfile);
+        Assert.Equal(1, refreshed.StudentProfile.IdCardChangeCount);
+        Assert.Equal("/uploads/idcards/updated_card.jpg", refreshed.StudentProfile.StudentIdCardUrl);
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_WhenChangingIdCardReachesLimit_RejectsSubsequentChanges()
+    {
+        // Arrange - User already changed ID card 3 times
+        var (facade, context, student) = SetupProfileEnvironment(Guid.NewGuid().ToString());
+        student.StudentProfile!.IdCardChangeCount = 3;
+        await context.SaveChangesAsync();
+
+        var editModel = new ProfileEditViewModel
+        {
+            FullName = student.FullName,
+            Department = "Computer Science",
+            Batch = "Fall 2026",
+            StudentIdCard = CreateMockFile("attempt_four.jpg")
+        };
+
+        // Act - Attempt 4th change
+        var result = await facade.UpdateProfileAsync(student.UserId, editModel);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("maximum limit of 3 ID card photo changes", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+
+        var refreshed = await context.Users.FindAsync(student.UserId);
+        Assert.Equal(3, refreshed!.StudentProfile!.IdCardChangeCount);
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_WithoutChangingIdCard_DoesNotIncrementCount()
+    {
+        // Arrange
+        var (facade, context, student) = SetupProfileEnvironment(Guid.NewGuid().ToString());
+        student.StudentProfile!.IdCardChangeCount = 2;
+        await context.SaveChangesAsync();
+
+        var editModel = new ProfileEditViewModel
+        {
+            FullName = "Grace Brewster Hopper",
+            Department = "Computer Science",
+            Batch = "Fall 2026",
+            StudentIdCard = null // No ID card file uploaded
+        };
+
+        // Act
+        var result = await facade.UpdateProfileAsync(student.UserId, editModel);
+
+        // Assert
+        Assert.True(result.Success);
+        var refreshed = await context.Users.FindAsync(student.UserId);
+        Assert.Equal(2, refreshed!.StudentProfile!.IdCardChangeCount); // Remains 2!
     }
 }

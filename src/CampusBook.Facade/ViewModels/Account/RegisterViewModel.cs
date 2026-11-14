@@ -15,11 +15,17 @@ public class RegisterViewModel
     [Display(Name = "Student ID")]
     public string StudentId { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "University Email is required.")]
+    [Required(ErrorMessage = "Personal / Login Email is required.")]
     [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
     [StringLength(150, ErrorMessage = "Email cannot exceed 150 characters.")]
-    [Display(Name = "University Email")]
+    [Display(Name = "Personal / Login Email")]
     public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "University Email is required.")]
+    [EmailAddress(ErrorMessage = "Please enter a valid university email address.")]
+    [StringLength(150, ErrorMessage = "University Email cannot exceed 150 characters.")]
+    [Display(Name = "University Email")]
+    public string UniversityEmail { get; set; } = string.Empty;
 
     [Phone(ErrorMessage = "Please enter a valid contact number.")]
     [StringLength(25, ErrorMessage = "Contact number cannot exceed 25 characters.")]
@@ -48,6 +54,7 @@ public class RegisterViewModel
     [Display(Name = "Batch / Intake")]
     public string Batch { get; set; } = string.Empty;
 
-    [Display(Name = "University ID Card Photo (Optional)")]
+    [Required(ErrorMessage = "University ID Card image or scan is required.")]
+    [Display(Name = "University ID Card")]
     public IFormFile? StudentIdCard { get; set; }
 }

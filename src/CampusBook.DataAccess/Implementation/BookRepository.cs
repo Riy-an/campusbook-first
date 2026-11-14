@@ -33,7 +33,7 @@ public class BookRepository : Repository<Book>, IBookRepository
     public async Task<IEnumerable<Book>> GetUserAvailableBooksAsync(int userId)
     {
         return await _dbContext.Books
-            .Where(b => b.OwnerId == userId && b.Status == BookStatus.Available)
+            .Where(b => b.OwnerId == userId && b.Status == BookStatus.Available && b.ExchangeType != ExchangeType.Donation)
             .OrderBy(b => b.Title)
             .ToListAsync();
     }
@@ -54,7 +54,7 @@ public class BookRepository : Repository<Book>, IBookRepository
             .Include(b => b.Category)
             .Include(b => b.Department)
             .Include(b => b.Owner)
-            .Where(b => b.Status == BookStatus.Available);
+            .Where(b => b.Status == BookStatus.Available && b.ExchangeType != ExchangeType.Donation);
 
         // Search term
         if (!string.IsNullOrWhiteSpace(searchTerm))

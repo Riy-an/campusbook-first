@@ -11,15 +11,18 @@ public class BooksController : Controller
 {
     private readonly IBookFacade _bookFacade;
     private readonly IUserFacade _userFacade;
+    private readonly IWishlistFacade _wishlistFacade;
     private readonly ILogger<BooksController> _logger;
 
     public BooksController(
         IBookFacade bookFacade,
         IUserFacade userFacade,
+        IWishlistFacade wishlistFacade,
         ILogger<BooksController> logger)
     {
         _bookFacade = bookFacade;
         _userFacade = userFacade;
+        _wishlistFacade = wishlistFacade;
         _logger = logger;
     }
 
@@ -50,6 +53,15 @@ public class BooksController : Controller
             return NotFound("Book listing not found.");
         }
 
+        if (currentUserId.HasValue)
+        {
+            ViewBag.IsInWishlist = await _wishlistFacade.IsInWishlistAsync(currentUserId.Value, id);
+        }
+        else
+        {
+            ViewBag.IsInWishlist = false;
+        }
+
         return View(bookDetails);
     }
 
@@ -58,13 +70,6 @@ public class BooksController : Controller
     [Authorize]
     public async Task<IActionResult> Create()
     {
-        var userId = GetCurrentUserId()!.Value;
-        if (!await _userFacade.IsEmailConfirmedAsync(userId))
-        {
-            TempData["ErrorMessage"] = "You must verify your university email before you can publish book listings.";
-            return RedirectToAction(nameof(Index));
-        }
-
         var model = new BookCreateViewModel
         {
             Categories = await _bookFacade.GetCategoriesDropdownAsync(),
@@ -81,11 +86,6 @@ public class BooksController : Controller
     public async Task<IActionResult> Create(BookCreateViewModel model)
     {
         var userId = GetCurrentUserId()!.Value;
-        if (!await _userFacade.IsEmailConfirmedAsync(userId))
-        {
-            TempData["ErrorMessage"] = "You must verify your university email before you can publish book listings.";
-            return RedirectToAction(nameof(Index));
-        }
 
         if (!ModelState.IsValid)
         {

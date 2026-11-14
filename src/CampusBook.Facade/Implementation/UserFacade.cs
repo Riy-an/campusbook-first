@@ -39,61 +39,58 @@ public class UserFacade : IUserFacade
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        // 1. Check university email domain restriction if configured
-        var allowedDomain = _configuration["Authentication:AllowedEmailDomain"];
-        if (!string.IsNullOrWhiteSpace(allowedDomain))
-        {
-            var emailParts = model.Email.Split('@');
-            if (emailParts.Length != 2 || !emailParts[1].Equals(allowedDomain.TrimStart('@'), StringComparison.OrdinalIgnoreCase))
-            {
-                return ServiceResult<User>.Fail($"Registration is restricted to university emails ending with '@{allowedDomain.TrimStart('@')}'.");
-            }
-        }
-
-        // 2. Check duplicate email
+        // 1. Check duplicate login email
         if (await _userRepository.EmailExistsAsync(model.Email))
         {
-            return ServiceResult<User>.Fail("A student account with this email address already exists.");
+            return ServiceResult<User>.Fail("A student account with this login email address already exists.");
         }
 
-        // 3. Check duplicate Student ID
+        // 2. Check duplicate Student ID
         if (await _userRepository.StudentIdExistsAsync(model.StudentId))
         {
             return ServiceResult<User>.Fail("A student account with this Student ID already exists.");
         }
 
-        // 4. Retrieve or initialize Student role
+        // 3. Validate University Email is provided
+        if (string.IsNullOrWhiteSpace(model.UniversityEmail))
+        {
+            return ServiceResult<User>.Fail("University email is required.");
+        }
+
+        // 4. Validate and handle required University ID Card upload
+        if (model.StudentIdCard == null || model.StudentIdCard.Length == 0)
+        {
+            return ServiceResult<User>.Fail("University ID Card photo or scan is required for registration.");
+        }
+
+        if (!_fileStorageService.IsValidImage(model.StudentIdCard, out var imageError))
+        {
+            return ServiceResult<User>.Fail($"ID card image error: {imageError}");
+        }
+
+        var idCardUrl = await _fileStorageService.SaveFileAsync(model.StudentIdCard, "uploads/idcards");
+
+        // 5. Retrieve or initialize Student role
         var studentRole = await _userRepository.GetRoleByNameAsync("Student");
         var roleId = studentRole?.RoleId ?? 1;
 
-        // 5. Handle optional Student ID Card upload
-        string? idCardUrl = null;
-        if (model.StudentIdCard != null && model.StudentIdCard.Length > 0)
-        {
-            if (!_fileStorageService.IsValidImage(model.StudentIdCard, out var imageError))
-            {
-                return ServiceResult<User>.Fail($"ID card image error: {imageError}");
-            }
-
-            idCardUrl = await _fileStorageService.SaveFileAsync(model.StudentIdCard, "uploads/idcards");
-        }
-
-        // 6. Build user entity with hashed password & confirmation token
+        // 6. Build user entity (immediately verified; no confirmation link required)
         var user = new User
         {
             FullName = model.FullName.Trim(),
             StudentId = model.StudentId.Trim(),
             Email = model.Email.Trim().ToLowerInvariant(),
             RoleId = roleId,
-            IsEmailConfirmed = false,
-            EmailConfirmationToken = Guid.NewGuid().ToString("N"),
-            EmailConfirmationTokenExpiry = DateTime.UtcNow.AddHours(24),
+            IsEmailConfirmed = true,
+            EmailConfirmationToken = null,
+            EmailConfirmationTokenExpiry = null,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             StudentProfile = new StudentProfile
             {
                 Department = model.Department.Trim(),
                 Batch = model.Batch.Trim(),
+                UniversityEmail = model.UniversityEmail.Trim().ToLowerInvariant(),
                 PhoneNumber = string.IsNullOrWhiteSpace(model.PhoneNumber) ? null : model.PhoneNumber.Trim(),
                 StudentIdCardUrl = idCardUrl,
                 UpdatedAt = DateTime.UtcNow
@@ -104,15 +101,6 @@ public class UserFacade : IUserFacade
 
         await _userRepository.AddAsync(user);
         _logger.LogInformation("Registered new student {Email} with ID {StudentId}", user.Email, user.StudentId);
-
-        // 6. Send email confirmation link
-        var confirmationLink = $"{confirmationBaseUrl.TrimEnd('/')}/confirm-email?token={user.EmailConfirmationToken}";
-        var emailSubject = "Confirm your CampusBook Student Account";
-        var emailBody = $"Hello {user.FullName},\n\nWelcome to CampusBook — University Book Exchange!\n" +
-                         $"Please confirm your university student account by clicking the link below:\n\n{confirmationLink}\n\n" +
-                         $"This link expires in 24 hours.\n\nThank you,\nCampusBook Team";
-
-        await _emailSender.SendEmailAsync(user.Email, emailSubject, emailBody);
 
         return ServiceResult<User>.Ok(user);
     }
@@ -135,12 +123,6 @@ public class UserFacade : IUserFacade
         if (verificationResult == PasswordVerificationResult.Failed)
         {
             return ServiceResult<User>.Fail("Invalid email or password.");
-        }
-
-        // Check email confirmation rule
-        if (!user.IsEmailConfirmed)
-        {
-            return ServiceResult<User>.Fail("Your email address has not been confirmed yet. Please verify your email before logging in.");
         }
 
         return ServiceResult<User>.Ok(user);
@@ -235,7 +217,7 @@ public class UserFacade : IUserFacade
     public async Task<bool> IsEmailConfirmedAsync(int userId)
     {
         var user = await _userRepository.GetByIdAsync(userId);
-        return user?.IsEmailConfirmed == true;
+        return user != null;
     }
 }
 

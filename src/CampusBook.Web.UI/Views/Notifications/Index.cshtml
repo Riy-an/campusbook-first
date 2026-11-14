@@ -1,0 +1,88 @@
+@model NotificationListViewModel
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Notifications 🔔</h1>
+        <p class="text-muted small mb-0">Stay updated on your book requests, exchange handovers, and wanted-book matches.</p>
+    </div>
+    @if (Model.UnreadCount > 0)
+    {
+        <form asp-action="MarkAllAsRead" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                ✓ Mark all as read
+            </button>
+        </form>
+    }
+</div>
+
+@if (!Model.Notifications.Any())
+{
+    <div class="card card-campus text-center py-5 border-0 shadow-sm">
+        <div class="card-body">
+            <span class="fs-1 d-inline-block mb-2">🔕</span>
+            <h2 class="h5 fw-bold mb-2">No Notifications Yet</h2>
+            <p class="text-muted small mb-0">When students request your books, accept trades, or message you, updates will appear here.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card card-campus shadow-sm border-0">
+        <div class="list-group list-group-flush">
+            @foreach (var n in Model.Notifications)
+            {
+                <div class="list-group-item p-3 d-flex justify-content-between align-items-center gap-3 @(!n.IsRead ? "bg-light" : "")">
+                    <div class="d-flex align-items-center gap-3 flex-grow-1">
+                        <span class="fs-3">
+                            @(n.Type switch {
+                                NotificationType.RequestReceived => "📥",
+                                NotificationType.RequestAccepted => "🎉",
+                                NotificationType.RequestRejected => "❌",
+                                NotificationType.RequestCancelled => "⚠️",
+                                NotificationType.BookUnavailable => "⏳",
+                                NotificationType.ExchangeCompleted => "🤝",
+                                NotificationType.WantedBookMatch => "📚",
+                                _ => "🔔"
+                            })
+                        </span>
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h2 class="h6 fw-bold mb-0 @(!n.IsRead ? "text-primary" : "text-dark")">@n.Title</h2>
+                                @if (!n.IsRead)
+                                {
+                                    <span class="badge bg-primary rounded-pill small" style="font-size: 0.65rem;">New</span>
+                                }
+                            </div>
+                            <p class="small text-secondary mb-1">@n.Message</p>
+                            <span class="text-muted" style="font-size: 0.75rem;">@n.CreatedAt.ToDateTimeText()</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        @if (!string.IsNullOrEmpty(n.NavigationUrl))
+                        {
+                            <a href="@n.NavigationUrl" class="btn btn-sm btn-campus-outline">
+                                View &rarr;
+                            </a>
+                        }
+
+                        @if (!n.IsRead)
+                        {
+                            <form asp-action="MarkAsRead" asp-route-id="@n.NotificationId" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                <button type="submit" class="btn btn-sm btn-light border" title="Mark as read">
+                                    ✓
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

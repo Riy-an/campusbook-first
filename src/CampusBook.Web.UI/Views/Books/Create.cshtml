@@ -8,7 +8,7 @@
         <div class="card card-campus shadow-sm">
             <div class="card-header bg-white p-4 border-bottom">
                 <h1 class="h4 fw-bold mb-1">Publish Used Academic Book</h1>
-                <p class="text-muted small mb-0">Share textbooks you no longer need with fellow university students for donation, sale, or exchange.</p>
+                <p class="text-muted small mb-0">Share textbooks you no longer need with fellow university students for sale or exchange.</p>
             </div>
             <div class="card-body p-4 p-md-5">
                 <form asp-action="Create" method="post" enctype="multipart/form-data">
@@ -78,13 +78,12 @@
                         </div>
                     </div>
 
-                    <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">3. Exchange Type & Pricing</h2>
+                    <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">3. Listing Type & Pricing</h2>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label asp-for="ExchangeType" class="form-label"></label>
                             <select asp-for="ExchangeType" id="exchangeTypeSelect" class="form-select">
-                                <option value="Donation">Donation (Free gift to fellow student)</option>
-                                <option value="Sale">Sale (Affordable textbook resale)</option>
+                                <option value="Sale" selected>Sale (Affordable textbook resale)</option>
                                 <option value="Exchange">Book Exchange (Trade for another course book)</option>
                             </select>
                             <span asp-validation-for="ExchangeType" class="text-danger small"></span>
@@ -94,10 +93,10 @@
                             <label asp-for="Price" class="form-label"></label>
                             <div class="input-group">
                                 <span class="input-group-text">৳</span>
-                                <input asp-for="Price" id="priceInput" type="number" step="0.5" min="0" class="form-control" placeholder="0.00" />
+                                <input asp-for="Price" id="priceInput" type="number" step="1" min="0" class="form-control" placeholder="0" />
                             </div>
                             
-                            <small class="text-muted" id="priceHelp">Donation & Exchange listings require ৳0.00 price.</small>
+                            <small class="text-muted" id="priceHelp">Enter an affordable student resale price in Taka.</small>
                         </div>
                     </div>
 
@@ -131,21 +130,21 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         function updatePriceInputState() {
-            var type = ৳('#exchangeTypeSelect').val();
-            var priceInput = ৳('#priceInput');
-            if (type === 'Donation' || type === 'Exchange') {
+            var type = $('#exchangeTypeSelect').val();
+            var priceInput = $('#priceInput');
+            if (type === 'Exchange') {
                 priceInput.val('0');
                 priceInput.prop('readonly', true);
-                        ৳('#priceHelp').text(type + ' listings have zero monetary cost.');
+                $('#priceHelp').text('Exchange listings have no monetary cost (book-for-book trade).');
             } else {
                 priceInput.prop('readonly', false);
-                        ৳('#priceHelp').text('Enter an affordable student price in Taka.');
+                $('#priceHelp').text('Enter an affordable student price in Taka.');
             }
         }
 
         $(document).ready(function() {
             updatePriceInputState();
-            ৳('#exchangeTypeSelect').change(updatePriceInputState);
+            $('#exchangeTypeSelect').change(updatePriceInputState);
         });
     </script>
 }

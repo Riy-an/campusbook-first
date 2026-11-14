@@ -42,5 +42,41 @@ public static class UrlRewrite
     {
         public const string Index = "dashboard";
     }
+
+    public static class Wishlist
+    {
+        public const string Index = "wishlist";
+        public const string Toggle = "wishlist/toggle";
+        public const string Remove = "wishlist/remove/{bookId}";
+    }
+
+    public static class WantedBooks
+    {
+        public const string Index = "wanted-books";
+        public const string MyPosts = "wanted-books/my-posts";
+        public const string Create = "wanted-books/create";
+        public const string Edit = "wanted-books/edit/{id}";
+        public const string Close = "wanted-books/close/{id}";
+        public const string Details = "wanted-books/details/{id}";
+    }
+
+    public static class Notifications
+    {
+        public const string Index = "notifications";
+        public const string MarkAsRead = "notifications/read/{id}";
+        public const string MarkAllAsRead = "notifications/read-all";
+    }
+
+    public static class Messages
+    {
+        public const string Index = "messages";
+        public const string Conversation = "messages/conversation/{id}";
+        public const string Send = "messages/send";
+    }
+
+    public static class History
+    {
+        public const string Index = "history";
+    }
 }
 

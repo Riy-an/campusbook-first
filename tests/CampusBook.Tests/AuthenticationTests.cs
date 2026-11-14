@@ -4,6 +4,7 @@ using CampusBook.Entities;
 using CampusBook.Facade.Implementation;
 using CampusBook.Facade.Services;
 using CampusBook.Facade.ViewModels.Account;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -14,6 +15,14 @@ namespace CampusBook.Tests;
 
 public class AuthenticationTests
 {
+    private static IFormFile CreateMockIdCard()
+    {
+        var formFileMock = new Mock<IFormFile>();
+        formFileMock.Setup(f => f.Length).Returns(1024);
+        formFileMock.Setup(f => f.FileName).Returns("idcard.jpg");
+        return formFileMock.Object;
+    }
+
     private (UserFacade facade, ApplicationDbContext context) CreateFacade(
         string dbName,
         Dictionary<string, string?>? configValues = null,
@@ -24,6 +33,15 @@ public class AuthenticationTests
         var passwordHasher = new PasswordHasher<User>();
         var emailSenderMock = new Mock<IEmailSender>();
         var storageMock = fileStorageMock ?? new Mock<IFileStorageService>();
+
+        if (fileStorageMock == null)
+        {
+            string? error;
+            storageMock.Setup(s => s.IsValidImage(It.IsAny<IFormFile>(), out error)).Returns(true);
+            storageMock.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>()))
+                .ReturnsAsync("/uploads/idcards/mock_idcard.jpg");
+        }
+
         var logger = NullLogger<UserFacade>.Instance;
 
         var inMemorySettings = configValues ?? new Dictionary<string, string?>();
@@ -36,7 +54,7 @@ public class AuthenticationTests
     }
 
     [Fact]
-    public async Task RegisterAsync_WithValidStudentData_SucceedsAndHashesPassword()
+    public async Task RegisterAsync_WithPersonalAndUniversityEmailAndIdCard_Succeeds()
     {
         // Arrange
         var (facade, context) = CreateFacade(Guid.NewGuid().ToString());
@@ -44,7 +62,9 @@ public class AuthenticationTests
         {
             FullName = "Alice Johnson",
             StudentId = "STU-1001",
-            Email = "alice@university.edu",
+            Email = "alice@gmail.com", // Personal email allowed!
+            UniversityEmail = "alice@university.edu",
+            StudentIdCard = CreateMockIdCard(),
             Password = "SecurePassword123!",
             ConfirmPassword = "SecurePassword123!",
             Department = "Computer Science",
@@ -57,11 +77,40 @@ public class AuthenticationTests
         // Assert
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
-        Assert.Equal("alice@university.edu", result.Data.Email);
+        Assert.Equal("alice@gmail.com", result.Data.Email);
         Assert.Equal("STU-1001", result.Data.StudentId);
-        Assert.False(result.Data.IsEmailConfirmed); // Must require confirmation!
-        Assert.NotEqual("SecurePassword123!", result.Data.PasswordHash); // Never plain text!
-        Assert.Equal(1, result.Data.RoleId); // Role must be Student!
+        Assert.True(result.Data.IsEmailConfirmed); // Email verification is removed in Phase 2
+        Assert.NotEqual("SecurePassword123!", result.Data.PasswordHash); // Hashed
+        Assert.Equal(1, result.Data.RoleId);
+        Assert.NotNull(result.Data.StudentProfile);
+        Assert.Equal("alice@university.edu", result.Data.StudentProfile.UniversityEmail);
+        Assert.Equal("/uploads/idcards/mock_idcard.jpg", result.Data.StudentProfile.StudentIdCardUrl);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WithoutIdCard_IsRejected()
+    {
+        // Arrange
+        var (facade, context) = CreateFacade(Guid.NewGuid().ToString());
+        var model = new RegisterViewModel
+        {
+            FullName = "No Card Student",
+            StudentId = "STU-1099",
+            Email = "nocard@gmail.com",
+            UniversityEmail = "nocard@university.edu",
+            StudentIdCard = null, // Missing ID card!
+            Password = "Password123!",
+            ConfirmPassword = "Password123!",
+            Department = "Physics",
+            Batch = "2026"
+        };
+
+        // Act
+        var result = await facade.RegisterAsync(model, "https://localhost:7155");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("University ID Card photo or scan is required", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -73,7 +122,9 @@ public class AuthenticationTests
         {
             FullName = "Bob Smith",
             StudentId = "STU-1002",
-            Email = "bob@university.edu",
+            Email = "bob@gmail.com",
+            UniversityEmail = "bob@university.edu",
+            StudentIdCard = CreateMockIdCard(),
             Password = "Password123!",
             ConfirmPassword = "Password123!",
             Department = "Physics",
@@ -86,7 +137,9 @@ public class AuthenticationTests
         {
             FullName = "Robert Smith",
             StudentId = "STU-1003",
-            Email = "bob@university.edu",
+            Email = "bob@gmail.com",
+            UniversityEmail = "robert@university.edu",
+            StudentIdCard = CreateMockIdCard(),
             Password = "Password123!",
             ConfirmPassword = "Password123!",
             Department = "Physics",
@@ -108,7 +161,9 @@ public class AuthenticationTests
         {
             FullName = "Charlie Brown",
             StudentId = "STU-1004",
-            Email = "charlie@university.edu",
+            Email = "charlie@gmail.com",
+            UniversityEmail = "charlie@university.edu",
+            StudentIdCard = CreateMockIdCard(),
             Password = "Password123!",
             ConfirmPassword = "Password123!",
             Department = "Mathematics",
@@ -121,7 +176,9 @@ public class AuthenticationTests
         {
             FullName = "Charles Brown",
             StudentId = "STU-1004",
-            Email = "charles.brown@university.edu",
+            Email = "charles.brown@gmail.com",
+            UniversityEmail = "charles@university.edu",
+            StudentIdCard = CreateMockIdCard(),
             Password = "Password123!",
             ConfirmPassword = "Password123!",
             Department = "Mathematics",
@@ -135,36 +192,7 @@ public class AuthenticationTests
     }
 
     [Fact]
-    public async Task RegisterAsync_WithRestrictedEmailDomain_EnforcesDomain()
-    {
-        // Arrange
-        var config = new Dictionary<string, string?>
-        {
-            { "Authentication:AllowedEmailDomain", "campus.edu" }
-        };
-        var (facade, _) = CreateFacade(Guid.NewGuid().ToString(), config);
-
-        var model = new RegisterViewModel
-        {
-            FullName = "David Lee",
-            StudentId = "STU-1005",
-            Email = "david@gmail.com", // Outside allowed domain!
-            Password = "Password123!",
-            ConfirmPassword = "Password123!",
-            Department = "Business",
-            Batch = "2026"
-        };
-
-        // Act
-        var result = await facade.RegisterAsync(model, "https://localhost:7155");
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.Contains("@campus.edu", result.ErrorMessage);
-    }
-
-    [Fact]
-    public async Task ValidateLoginAsync_WhenEmailNotConfirmed_BlocksLogin()
+    public async Task ValidateLoginAsync_AllowsImmediateLoginWithoutEmailConfirmation()
     {
         // Arrange
         var (facade, _) = CreateFacade(Guid.NewGuid().ToString());
@@ -172,51 +200,24 @@ public class AuthenticationTests
         {
             FullName = "Emma Watson",
             StudentId = "STU-1006",
-            Email = "emma@university.edu",
+            Email = "emma@yahoo.com",
+            UniversityEmail = "emma@university.edu",
+            StudentIdCard = CreateMockIdCard(),
             Password = "Password123!",
             ConfirmPassword = "Password123!",
             Department = "Arts",
             Batch = "2026"
         };
-        await facade.RegisterAsync(model, "https://localhost:7155");
-
-        // Act - Try logging in before email confirmation
-        var loginResult = await facade.ValidateLoginAsync("emma@university.edu", "Password123!");
-
-        // Assert
-        Assert.False(loginResult.Success);
-        Assert.Contains("not been confirmed", loginResult.ErrorMessage, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task ConfirmEmailAsync_WithValidToken_EnablesAccountLogin()
-    {
-        // Arrange
-        var (facade, context) = CreateFacade(Guid.NewGuid().ToString());
-        var model = new RegisterViewModel
-        {
-            FullName = "Frank Castle",
-            StudentId = "STU-1007",
-            Email = "frank@university.edu",
-            Password = "Password123!",
-            ConfirmPassword = "Password123!",
-            Department = "Engineering",
-            Batch = "2026"
-        };
         var regResult = await facade.RegisterAsync(model, "https://localhost:7155");
-        var token = regResult.Data!.EmailConfirmationToken!;
+        Assert.True(regResult.Success);
 
-        // Act - Confirm email
-        var confirmResult = await facade.ConfirmEmailAsync(token);
+        // Act - Immediate login without confirming email via link
+        var loginResult = await facade.ValidateLoginAsync("emma@yahoo.com", "Password123!");
 
         // Assert
-        Assert.True(confirmResult.Success);
-
-        // Act - Now login
-        var loginResult = await facade.ValidateLoginAsync("frank@university.edu", "Password123!");
         Assert.True(loginResult.Success);
         Assert.NotNull(loginResult.Data);
-        Assert.True(loginResult.Data.IsEmailConfirmed);
+        Assert.Equal("emma@yahoo.com", loginResult.Data.Email);
     }
 
     [Fact]
@@ -224,12 +225,12 @@ public class AuthenticationTests
     {
         // Arrange
         var fileStorageMock = new Mock<IFileStorageService>();
-        var formFileMock = new Mock<Microsoft.AspNetCore.Http.IFormFile>();
+        var formFileMock = new Mock<IFormFile>();
         formFileMock.Setup(f => f.Length).Returns(1024);
         string? error;
-        fileStorageMock.Setup(s => s.IsValidImage(It.IsAny<Microsoft.AspNetCore.Http.IFormFile>(), out error))
+        fileStorageMock.Setup(s => s.IsValidImage(It.IsAny<IFormFile>(), out error))
             .Returns(true);
-        fileStorageMock.Setup(s => s.SaveFileAsync(It.IsAny<Microsoft.AspNetCore.Http.IFormFile>(), "uploads/idcards"))
+        fileStorageMock.Setup(s => s.SaveFileAsync(It.IsAny<IFormFile>(), "uploads/idcards"))
             .ReturnsAsync("/uploads/idcards/student_card.jpg");
 
         var (facade, context) = CreateFacade(Guid.NewGuid().ToString(), fileStorageMock: fileStorageMock);
@@ -238,7 +239,8 @@ public class AuthenticationTests
         {
             FullName = "Sadia Islam",
             StudentId = "STU-2001",
-            Email = "sadia@university.edu",
+            Email = "sadia@gmail.com",
+            UniversityEmail = "sadia@university.edu",
             PhoneNumber = "01712-345678",
             StudentIdCard = formFileMock.Object,
             Password = "Password123!",
@@ -256,6 +258,7 @@ public class AuthenticationTests
         Assert.NotNull(result.Data.StudentProfile);
         Assert.Equal("01712-345678", result.Data.StudentProfile.PhoneNumber);
         Assert.Equal("/uploads/idcards/student_card.jpg", result.Data.StudentProfile.StudentIdCardUrl);
+        Assert.Equal("sadia@university.edu", result.Data.StudentProfile.UniversityEmail);
     }
 
     [Fact]

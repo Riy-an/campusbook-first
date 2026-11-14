@@ -14,6 +14,10 @@ public class DashboardViewModel
     public int PendingReceivedRequestsCount { get; set; }
     public int PendingSentRequestsCount { get; set; }
     public int CompletedExchangesCount { get; set; }
+    public int WishlistCount { get; set; }
+    public int WantedBooksCount { get; set; }
+    public int UnreadNotificationsCount { get; set; }
+    public int UnreadMessagesCount { get; set; }
 
     public IEnumerable<BookItemViewModel> RecentListings { get; set; } = new List<BookItemViewModel>();
     public IEnumerable<ReceivedRequestViewModel> RecentIncomingRequests { get; set; } = new List<ReceivedRequestViewModel>();

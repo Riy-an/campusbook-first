@@ -40,9 +40,9 @@ public class BookCreateViewModel
     [Display(Name = "Book Condition")]
     public BookCondition Condition { get; set; } = BookCondition.Good;
 
-    [Required(ErrorMessage = "Exchange Type is required.")]
+    [Required(ErrorMessage = "Listing Type is required.")]
     [Display(Name = "Listing Type")]
-    public ExchangeType ExchangeType { get; set; } = ExchangeType.Donation;
+    public ExchangeType ExchangeType { get; set; } = ExchangeType.Sale;
 
     [Range(0, 99999.99, ErrorMessage = "Price must be a positive number.")]
     [Display(Name = "Price (৳)")]

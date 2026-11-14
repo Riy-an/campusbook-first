@@ -1,0 +1,119 @@
+@model WantedBookEditViewModel
+@{
+    ViewData["Title"] = "Edit Wanted Book Post";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-lg-8">
+        <div class="card card-campus shadow-sm border-0">
+            <div class="card-header bg-white p-4 border-bottom">
+                <h1 class="h4 fw-bold mb-1">Edit Wanted Book Post</h1>
+                <p class="text-muted small mb-0">Update your book details or close your request if fulfilled.</p>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <form asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="WantedBookId" />
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label asp-for="Title" class="form-label fw-semibold small"></label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Status" class="form-label fw-semibold small"></label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="Active">Active (Still Looking)</option>
+                                <option value="Fulfilled">Fulfilled (Found Book)</option>
+                                <option value="Closed">Closed</option>
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Author" class="form-label fw-semibold small"></label>
+                            <input asp-for="Author" class="form-control" />
+                            <span asp-validation-for="Author" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Isbn" class="form-label fw-semibold small"></label>
+                            <input asp-for="Isbn" class="form-control" />
+                            <span asp-validation-for="Isbn" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="CategoryId" class="form-label fw-semibold small"></label>
+                            <select asp-for="CategoryId" class="form-select" asp-items="Model.Categories"></select>
+                            <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DepartmentId" class="form-label fw-semibold small"></label>
+                            <select asp-for="DepartmentId" class="form-select" asp-items="Model.Departments">
+                                <option value="">-- Optional: Department --</option>
+                            </select>
+                            <span asp-validation-for="DepartmentId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="CourseCode" class="form-label fw-semibold small"></label>
+                            <input asp-for="CourseCode" class="form-control" />
+                            <span asp-validation-for="CourseCode" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="PreferredCondition" class="form-label fw-semibold small"></label>
+                            <select asp-for="PreferredCondition" class="form-select">
+                                <option value="">Any Condition</option>
+                                <option value="New">New / Like New</option>
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                            <span asp-validation-for="PreferredCondition" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="MaxBudget" class="form-label fw-semibold small"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">৳</span>
+                                <input asp-for="MaxBudget" type="number" step="1" min="0" class="form-control" />
+                            </div>
+                            <span asp-validation-for="MaxBudget" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label asp-for="PreferredExchangeType" class="form-label fw-semibold small"></label>
+                            <select asp-for="PreferredExchangeType" class="form-select">
+                                <option value="">Either Sale or Exchange</option>
+                                <option value="Sale">Sale (Purchase)</option>
+                                <option value="Exchange">Exchange (Trade)</option>
+                            </select>
+                            <span asp-validation-for="PreferredExchangeType" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label asp-for="Description" class="form-label fw-semibold small"></label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a asp-action="MyPosts" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-campus px-4 py-2 shadow-sm">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

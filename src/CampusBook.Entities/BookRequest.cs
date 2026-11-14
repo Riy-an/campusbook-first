@@ -22,6 +22,9 @@ public class BookRequest
     public bool RequesterConfirmed { get; set; }
     public DateTime? RequesterConfirmedAt { get; set; }
 
+    public virtual ExchangeOffer? ExchangeOffer { get; set; }
+    public virtual Conversation? Conversation { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 }

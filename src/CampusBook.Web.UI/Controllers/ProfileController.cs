@@ -67,7 +67,10 @@ public class ProfileController : Controller
             {
                 model.StudentId = current.StudentId;
                 model.Email = current.Email;
+                model.UniversityEmail = current.UniversityEmail;
                 model.CurrentProfilePictureUrl = current.CurrentProfilePictureUrl;
+                model.CurrentStudentIdCardUrl = current.CurrentStudentIdCardUrl;
+                model.IdCardChangeCount = current.IdCardChangeCount;
             }
             return View(model);
         }
@@ -75,6 +78,16 @@ public class ProfileController : Controller
         var result = await _profileFacade.UpdateProfileAsync(userId, model);
         if (!result.Success)
         {
+            var current = await _profileFacade.GetProfileForEditAsync(userId);
+            if (current != null)
+            {
+                model.StudentId = current.StudentId;
+                model.Email = current.Email;
+                model.UniversityEmail = current.UniversityEmail;
+                model.CurrentProfilePictureUrl = current.CurrentProfilePictureUrl;
+                model.CurrentStudentIdCardUrl = current.CurrentStudentIdCardUrl;
+                model.IdCardChangeCount = current.IdCardChangeCount;
+            }
             ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Could not update profile.");
             return View(model);
         }

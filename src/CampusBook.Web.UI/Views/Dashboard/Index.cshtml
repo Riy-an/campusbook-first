@@ -65,43 +65,55 @@
 </div>
 
 <!-- Quick Navigation Bar -->
-<div class="card card-campus shadow-sm p-4 mb-5">
-    <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">Quick Navigation</h2>
-    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-2 text-center">
+<div class="card card-campus shadow-sm p-4 mb-5 border-0">
+    <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">Quick Navigation & Workspaces</h2>
+    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-8 g-2 text-center">
         <div class="col">
             <a asp-controller="Books" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
                 <span class="fs-4 d-block mb-1">🔍</span>
-                <span class="small fw-semibold">Browse Books</span>
+                <span class="small fw-semibold">Browse</span>
             </a>
         </div>
         <div class="col">
             <a asp-controller="Books" asp-action="MyBooks" class="btn btn-outline-secondary w-100 py-3">
                 <span class="fs-4 d-block mb-1">📖</span>
-                <span class="small fw-semibold">My Books</span>
-            </a>
-        </div>
-        <div class="col">
-            <a asp-controller="Books" asp-action="Create" class="btn btn-outline-secondary w-100 py-3">
-                <span class="fs-4 d-block mb-1">➕</span>
-                <span class="small fw-semibold">Add a Book</span>
-            </a>
-        </div>
-        <div class="col">
-            <a asp-controller="Requests" asp-action="Sent" class="btn btn-outline-secondary w-100 py-3">
-                <span class="fs-4 d-block mb-1">📤</span>
-                <span class="small fw-semibold">Sent Requests</span>
+                <span class="small fw-semibold">My Listings</span>
             </a>
         </div>
         <div class="col">
             <a asp-controller="Requests" asp-action="Received" class="btn btn-outline-secondary w-100 py-3">
                 <span class="fs-4 d-block mb-1">📥</span>
-                <span class="small fw-semibold">Book Requests</span>
+                <span class="small fw-semibold">Requests</span>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Wishlist" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+                <span class="fs-4 d-block mb-1">💖</span>
+                <span class="small fw-semibold">Wishlist (@Model.WishlistCount)</span>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="WantedBooks" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+                <span class="fs-4 d-block mb-1">📢</span>
+                <span class="small fw-semibold">Wanted Posts</span>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Messages" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+                <span class="fs-4 d-block mb-1">💬</span>
+                <span class="small fw-semibold">Messages (@Model.UnreadMessagesCount)</span>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="History" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+                <span class="fs-4 d-block mb-1">📜</span>
+                <span class="small fw-semibold">History</span>
             </a>
         </div>
         <div class="col">
             <a asp-controller="Profile" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
                 <span class="fs-4 d-block mb-1">👤</span>
-                <span class="small fw-semibold">My Profile</span>
+                <span class="small fw-semibold">Profile</span>
             </a>
         </div>
     </div>

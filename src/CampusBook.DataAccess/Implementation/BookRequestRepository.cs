@@ -19,6 +19,11 @@ public class BookRequestRepository : Repository<BookRequest>, IBookRequestReposi
             .Include(r => r.Requester)
                 .ThenInclude(u => u.StudentProfile)
             .Include(r => r.OfferedBook)
+            .Include(r => r.ExchangeOffer)
+                .ThenInclude(eo => eo!.Category)
+            .Include(r => r.ExchangeOffer)
+                .ThenInclude(eo => eo!.Department)
+            .Include(r => r.Conversation)
             .FirstOrDefaultAsync(r => r.RequestId == requestId);
     }
 
@@ -28,6 +33,8 @@ public class BookRequestRepository : Repository<BookRequest>, IBookRequestReposi
             .Include(r => r.Book)
                 .ThenInclude(b => b.Owner)
             .Include(r => r.OfferedBook)
+            .Include(r => r.ExchangeOffer)
+            .Include(r => r.Conversation)
             .Where(r => r.RequesterId == requesterId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
@@ -40,6 +47,8 @@ public class BookRequestRepository : Repository<BookRequest>, IBookRequestReposi
             .Include(r => r.Requester)
                 .ThenInclude(u => u.StudentProfile)
             .Include(r => r.OfferedBook)
+            .Include(r => r.ExchangeOffer)
+            .Include(r => r.Conversation)
             .Where(r => r.Book.OwnerId == ownerId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
@@ -79,6 +88,27 @@ public class BookRequestRepository : Repository<BookRequest>, IBookRequestReposi
         return await _dbContext.BookRequests
             .CountAsync(r => (r.RequesterId == userId || r.Book.OwnerId == userId) &&
                              r.Status == RequestStatus.Completed);
+    }
+
+    public async Task<IEnumerable<BookRequest>> GetCompletedTransactionsByUserAsync(int userId)
+    {
+        return await _dbContext.BookRequests
+            .Include(r => r.Book)
+                .ThenInclude(b => b.Owner)
+                    .ThenInclude(o => o.StudentProfile)
+            .Include(r => r.Book)
+                .ThenInclude(b => b.Category)
+            .Include(r => r.Requester)
+                .ThenInclude(u => u.StudentProfile)
+            .Include(r => r.OfferedBook)
+            .Include(r => r.ExchangeOffer)
+                .ThenInclude(eo => eo!.Category)
+            .Include(r => r.ExchangeOffer)
+                .ThenInclude(eo => eo!.Department)
+            .Where(r => r.Status == RequestStatus.Completed &&
+                        (r.RequesterId == userId || r.Book.OwnerId == userId))
+            .OrderByDescending(r => r.UpdatedAt ?? r.CreatedAt)
+            .ToListAsync();
     }
 }
 

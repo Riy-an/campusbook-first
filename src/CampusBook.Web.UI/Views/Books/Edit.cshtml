@@ -87,7 +87,6 @@
                         <div class="col-md-6">
                             <label asp-for="ExchangeType" class="form-label"></label>
                             <select asp-for="ExchangeType" id="exchangeTypeSelect" class="form-select">
-                                <option value="Donation" selected="@(Model.ExchangeType == ExchangeType.Donation)">Donation</option>
                                 <option value="Sale" selected="@(Model.ExchangeType == ExchangeType.Sale)">Sale</option>
                                 <option value="Exchange" selected="@(Model.ExchangeType == ExchangeType.Exchange)">Book Exchange</option>
                             </select>
@@ -139,7 +138,7 @@
         function updatePriceInputState() {
             var type = $('#exchangeTypeSelect').val();
             var priceInput = $('#priceInput');
-            if (type === 'Donation' || type === 'Exchange') {
+            if (type === 'Exchange') {
                 priceInput.val('0');
                 priceInput.prop('readonly', true);
             } else {

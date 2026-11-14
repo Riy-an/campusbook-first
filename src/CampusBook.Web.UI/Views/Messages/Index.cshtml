@@ -1,0 +1,71 @@
+@model IEnumerable<ConversationSummaryViewModel>
+@{
+    ViewData["Title"] = "My Messages";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Messages 💬</h1>
+        <p class="text-muted small mb-0">Direct, private communication with students regarding your accepted book requests.</p>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card card-campus text-center py-5 border-0 shadow-sm">
+        <div class="card-body">
+            <span class="fs-1 d-inline-block mb-2">💬</span>
+            <h2 class="h5 fw-bold mb-2">No Active Conversations</h2>
+            <p class="text-muted small mb-0">Messaging opens automatically once a book request is accepted by the owner to coordinate on-campus handover.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card card-campus shadow-sm border-0">
+        <div class="list-group list-group-flush">
+            @foreach (var c in Model)
+            {
+                <a asp-action="Conversation" asp-route-id="@c.ConversationId" class="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        @if (!string.IsNullOrEmpty(c.OtherPartyPhotoUrl))
+                        {
+                            <img src="@c.OtherPartyPhotoUrl" alt="@c.OtherPartyName" class="rounded-circle border" style="width: 48px; height: 48px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="rounded-circle bg-light border text-muted d-flex align-items-center justify-content-center fw-bold" style="width: 48px; height: 48px;">
+                                @c.OtherPartyName.FirstOrDefault()
+                            </div>
+                        }
+
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h2 class="h6 fw-bold mb-0 text-dark">@c.OtherPartyName</h2>
+                                <span class="badge bg-light text-muted border small">@c.OtherPartyDepartment</span>
+                                @if (c.IsExchangeCompleted)
+                                {
+                                    <span class="badge bg-success-subtle text-success border small">Completed</span>
+                                }
+                            </div>
+                            <div class="small text-muted mb-1">
+                                Book: <strong>@c.BookTitle</strong>
+                            </div>
+                            <p class="small text-secondary mb-0 text-truncate" style="max-width: 400px;">
+                                @(string.IsNullOrEmpty(c.LastMessageContent) ? "No messages yet. Say hello to arrange the handover!" : c.LastMessageContent)
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <div class="text-muted small mb-1">@c.LastActivityAt.ToDateText()</div>
+                        @if (c.UnreadCount > 0)
+                        {
+                            <span class="badge bg-primary rounded-pill">@c.UnreadCount new</span>
+                        }
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+}

@@ -10,7 +10,7 @@
                 <div class="text-center mb-4">
                     <span class="fs-1 d-inline-block mb-1">🎓</span>
                     <h2 class="h4 fw-bold mb-1">Create Student Account</h2>
-                    <p class="text-muted small">Join your campus book exchange network to share, donate, and find textbooks</p>
+                    <p class="text-muted small">Join your campus book exchange network to buy, sell, and exchange textbooks</p>
                 </div>
 
                 <form asp-controller="Account" asp-action="Register" method="post" enctype="multipart/form-data">
@@ -20,7 +20,7 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label asp-for="FullName" class="form-label fw-semibold small"></label>
-                            <input asp-for="FullName" class="form-control" placeholder="Shahed Bin Hossan Riyan" />
+                            <input asp-for="FullName" class="form-control" placeholder="e.g. Shahed Bin Hossan Riyan" />
                             <span asp-validation-for="FullName" class="text-danger small"></span>
                         </div>
 
@@ -31,9 +31,25 @@
                         </div>
 
                         <div class="col-md-6">
+                            <label asp-for="PhoneNumber" class="form-label fw-semibold small">Contact No. <span class="text-muted fw-normal">(Optional)</span></label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="01XXXXXXXXX (e.g. 01712-345678)" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Login/Personal Email -->
+                        <div class="col-md-6">
                             <label asp-for="Email" class="form-label fw-semibold small"></label>
-                            <input asp-for="Email" class="form-control" placeholder="yourid@iubat.edu" />
+                            <input asp-for="Email" class="form-control" placeholder="personal.email@gmail.com" />
+                            <div class="form-text small text-muted">Used for login and account recovery (Gmail, Outlook, etc.).</div>
                             <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <!-- University Email -->
+                        <div class="col-md-6">
+                            <label asp-for="UniversityEmail" class="form-label fw-semibold small"></label>
+                            <input asp-for="UniversityEmail" class="form-control" placeholder="student.id@university.edu.bd" />
+                            <div class="form-text small text-muted">For institutional identification (no email code required).</div>
+                            <span asp-validation-for="UniversityEmail" class="text-danger small"></span>
                         </div>
 
                         <div class="col-md-6">
@@ -48,15 +64,13 @@
                             <span asp-validation-for="Batch" class="text-danger small"></span>
                         </div>
 
-                        <div class="col-md-6">
-                            <label asp-for="PhoneNumber" class="form-label fw-semibold small">Contact No. <span class="text-muted fw-normal">(Optional)</span></label>
-                            <input asp-for="PhoneNumber" class="form-control" placeholder="01XXXXXXXXX (e.g. 01712-345678)" />
-                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label asp-for="StudentIdCard" class="form-label fw-semibold small">University ID Card Photo <span class="badge bg-light text-secondary border fw-normal">Optional</span></label>
+                        <!-- Required University ID Card Upload -->
+                        <div class="col-md-12">
+                            <label asp-for="StudentIdCard" class="form-label fw-semibold small">
+                                University ID Card Photo / Scan <span class="badge bg-danger-subtle text-danger border fw-normal">Required</span>
+                            </label>
                             <input asp-for="StudentIdCard" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                            <div class="form-text small text-muted">Upload a clear photo or scan of your university student ID card (JPG, PNG, WebP &bull; Max 5MB). Stored securely and kept strictly private.</div>
                             <span asp-validation-for="StudentIdCard" class="text-danger small"></span>
                         </div>
 
@@ -75,7 +89,7 @@
 
                     <div class="alert alert-light border small text-muted my-4 py-2 px-3 rounded-3 d-flex align-items-center gap-2">
                         <span class="fs-5">ℹ️</span>
-                        <div><strong>Verification Note:</strong> A confirmation link will be generated for your university email address.</div>
+                        <div><strong>Instant Activation:</strong> Your student account is activated upon registration. No email confirmation link needed!</div>
                     </div>
 
                     <button type="submit" class="btn btn-campus w-100 py-2 mb-3 shadow-sm">Register Student Account</button>

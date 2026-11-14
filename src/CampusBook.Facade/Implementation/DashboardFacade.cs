@@ -11,15 +11,27 @@ public class DashboardFacade : IDashboardFacade
     private readonly IUserRepository _userRepository;
     private readonly IBookRepository _bookRepository;
     private readonly IBookRequestRepository _requestRepository;
+    private readonly IWishlistRepository _wishlistRepository;
+    private readonly IWantedBookRepository _wantedBookRepository;
+    private readonly INotificationRepository _notificationRepository;
+    private readonly IConversationRepository _conversationRepository;
 
     public DashboardFacade(
         IUserRepository userRepository,
         IBookRepository bookRepository,
-        IBookRequestRepository requestRepository)
+        IBookRequestRepository requestRepository,
+        IWishlistRepository wishlistRepository,
+        IWantedBookRepository wantedBookRepository,
+        INotificationRepository notificationRepository,
+        IConversationRepository conversationRepository)
     {
         _userRepository = userRepository;
         _bookRepository = bookRepository;
         _requestRepository = requestRepository;
+        _wishlistRepository = wishlistRepository;
+        _wantedBookRepository = wantedBookRepository;
+        _notificationRepository = notificationRepository;
+        _conversationRepository = conversationRepository;
     }
 
     public async Task<DashboardViewModel> GetDashboardDataAsync(int userId)
@@ -30,6 +42,10 @@ public class DashboardFacade : IDashboardFacade
         var pendingSentCount = await _requestRepository.CountPendingSentByUserAsync(userId);
         var pendingReceivedCount = await _requestRepository.CountPendingReceivedByUserAsync(userId);
         var completedCount = await _requestRepository.CountCompletedExchangesByUserAsync(userId);
+        var wishlistCount = await _wishlistRepository.CountUserWishlistAsync(userId);
+        var wantedCount = await _wantedBookRepository.CountActiveByUserAsync(userId);
+        var unreadNotifications = await _notificationRepository.GetUnreadCountAsync(userId);
+        var unreadMessages = await _conversationRepository.GetUnreadMessageCountAsync(userId);
 
         var myBooks = await _bookRepository.GetUserBooksAsync(userId);
         var incoming = await _requestRepository.GetReceivedRequestsByOwnerAsync(userId);
@@ -45,6 +61,10 @@ public class DashboardFacade : IDashboardFacade
             PendingSentRequestsCount = pendingSentCount,
             PendingReceivedRequestsCount = pendingReceivedCount,
             CompletedExchangesCount = completedCount,
+            WishlistCount = wishlistCount,
+            WantedBooksCount = wantedCount,
+            UnreadNotificationsCount = unreadNotifications,
+            UnreadMessagesCount = unreadMessages,
             RecentListings = myBooks.Take(5).Select(b => new BookItemViewModel
             {
                 BookId = b.BookId,

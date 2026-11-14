@@ -53,9 +53,16 @@
             <div class="card-header bg-white fw-bold">Academic Details</div>
             <ul class="list-group list-group-flush small">
                 <li class="list-group-item d-flex justify-content-between">
-                    <span class="text-muted">University Email:</span>
+                    <span class="text-muted">Login Email:</span>
                     <span class="fw-semibold">@Model.Email</span>
                 </li>
+                @if (!string.IsNullOrEmpty(Model.UniversityEmail))
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="text-muted">University Email:</span>
+                        <span class="fw-semibold">@Model.UniversityEmail</span>
+                    </li>
+                }
                 <li class="list-group-item d-flex justify-content-between">
                     <span class="text-muted">Department:</span>
                     <span class="fw-semibold">@Model.Department</span>
@@ -76,9 +83,14 @@
                 {
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <span class="text-muted">Student ID Card:</span>
-                        <a href="@Model.StudentIdCardUrl" target="_blank" class="badge bg-light text-primary border text-decoration-none py-1 px-2">
-                            View ID Card ↗
-                        </a>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge @(Model.RemainingIdCardChanges > 0 ? "bg-info text-dark" : "bg-secondary")" style="font-size: 0.72rem;">
+                                @Model.IdCardChangeCount/3 changes
+                            </span>
+                            <a href="@Model.StudentIdCardUrl" target="_blank" class="badge bg-light text-primary border text-decoration-none py-1 px-2">
+                                View ID Card ↗
+                            </a>
+                        </div>
                     </li>
                 }
                 <li class="list-group-item d-flex justify-content-between">

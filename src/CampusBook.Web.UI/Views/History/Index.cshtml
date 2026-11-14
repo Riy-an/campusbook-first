@@ -1,0 +1,151 @@
+@model ExchangeHistoryPageViewModel
+@{
+    ViewData["Title"] = "Exchange History";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Exchange History 📜</h1>
+        <p class="text-muted small mb-0">Authoritative record of your completed book sales, purchases, and trades on campus.</p>
+    </div>
+</div>
+
+<!-- Transaction Summary Metrics -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card border-0 shadow-sm">
+            <div>
+                <div class="stat-number text-success">@Model.TotalSold</div>
+                <div class="stat-label">Books Sold</div>
+            </div>
+            <div class="fs-1 text-muted">🏷️</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card border-0 shadow-sm">
+            <div>
+                <div class="stat-number text-primary">@Model.TotalPurchased</div>
+                <div class="stat-label">Books Purchased</div>
+            </div>
+            <div class="fs-1 text-muted">🛒</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card border-0 shadow-sm">
+            <div>
+                <div class="stat-number text-purple" style="color: #8b5cf6;">@Model.TotalExchanged</div>
+                <div class="stat-label">Books Exchanged</div>
+            </div>
+            <div class="fs-1 text-muted">🔄</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="mb-4">
+    <div class="btn-group btn-group-sm">
+        <a asp-action="Index" asp-route-filter="All" class="btn @(Model.Filter == HistoryRoleFilter.All ? "btn-dark" : "btn-outline-secondary")">
+            All Transactions
+        </a>
+        <a asp-action="Index" asp-route-filter="Sold" class="btn @(Model.Filter == HistoryRoleFilter.Sold ? "btn-dark" : "btn-outline-secondary")">
+            Sold (@Model.TotalSold)
+        </a>
+        <a asp-action="Index" asp-route-filter="Purchased" class="btn @(Model.Filter == HistoryRoleFilter.Purchased ? "btn-dark" : "btn-outline-secondary")">
+            Purchased (@Model.TotalPurchased)
+        </a>
+        <a asp-action="Index" asp-route-filter="Exchanged" class="btn @(Model.Filter == HistoryRoleFilter.Exchanged ? "btn-dark" : "btn-outline-secondary")">
+            Exchanged (@Model.TotalExchanged)
+        </a>
+    </div>
+</div>
+
+@if (!Model.Transactions.Any())
+{
+    <div class="card card-campus text-center py-5 border-0 shadow-sm">
+        <div class="card-body">
+            <span class="fs-1 d-inline-block mb-2">📜</span>
+            <h2 class="h5 fw-bold mb-2">No Completed Transactions Found</h2>
+            <p class="text-muted small mb-0">When your book requests or listings are accepted and both parties confirm handover, your transaction history will be recorded here.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card card-campus shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Book</th>
+                        <th>Type & Role</th>
+                        <th>Amount / Trade Details</th>
+                        <th>Transacted With</th>
+                        <th>Completed</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.Transactions)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (!string.IsNullOrEmpty(t.BookImageUrl))
+                                    {
+                                        <img src="@t.BookImageUrl" alt="@t.BookTitle" style="width: 40px; height: 50px; object-fit: cover; border-radius: 4px;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="width: 40px; height: 50px; border-radius: 4px;">📖</div>
+                                    }
+                                    <div>
+                                        <div class="fw-bold">@t.BookTitle</div>
+                                        <div class="small text-muted">by @t.BookAuthor &bull; @t.CategoryName</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <span class="badge @(t.ExchangeType == ExchangeType.Sale ? "badge-type-sale" : "badge-type-exchange")">
+                                        @t.ExchangeType
+                                    </span>
+                                </div>
+                                <span class="small text-muted">@t.TransactionRoleBadge</span>
+                            </td>
+                            <td>
+                                @if (t.ExchangeType == ExchangeType.Sale)
+                                {
+                                    <strong class="text-primary">@t.Price.ToPriceText()</strong>
+                                }
+                                else if (t.OfferedBookDetails != null)
+                                {
+                                    <div class="small">
+                                        <span class="text-muted">Offered:</span>
+                                        <strong>@t.OfferedBookDetails.Title</strong>
+                                        <div class="text-muted" style="font-size: 0.75rem;">by @t.OfferedBookDetails.Author (@t.OfferedBookDetails.Condition)</div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Book-for-Book</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@t.OtherPartyName</div>
+                                <div class="small text-muted">@t.OtherPartyDepartment @(!string.IsNullOrEmpty(t.OtherPartyBatch) ? $"({t.OtherPartyBatch})" : "")</div>
+                            </td>
+                            <td class="small text-muted">
+                                @t.CompletedAt.ToDateText()
+                            </td>
+                            <td class="text-end pe-4">
+                                <a asp-controller="Requests" asp-action="Details" asp-route-id="@t.RequestId" class="btn btn-sm btn-campus-outline">
+                                    Receipt &rarr;
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

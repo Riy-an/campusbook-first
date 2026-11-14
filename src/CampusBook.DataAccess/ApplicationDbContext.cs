@@ -17,6 +17,12 @@ public class ApplicationDbContext : DbContext
     public DbSet<BookCategory> BookCategories => Set<BookCategory>();
     public DbSet<Book> Books => Set<Book>();
     public DbSet<BookRequest> BookRequests => Set<BookRequest>();
+    public DbSet<ExchangeOffer> ExchangeOffers => Set<ExchangeOffer>();
+    public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
+    public DbSet<WantedBook> WantedBooks => Set<WantedBook>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<Message> Messages => Set<Message>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,10 +65,12 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(sp => sp.UserId);
             entity.Property(sp => sp.Department).IsRequired().HasMaxLength(100);
             entity.Property(sp => sp.Batch).IsRequired().HasMaxLength(50);
+            entity.Property(sp => sp.UniversityEmail).HasMaxLength(150);
             entity.Property(sp => sp.Semester).HasMaxLength(50);
             entity.Property(sp => sp.PhoneNumber).HasMaxLength(25);
             entity.Property(sp => sp.ProfilePictureUrl).HasMaxLength(300);
             entity.Property(sp => sp.StudentIdCardUrl).HasMaxLength(300);
+            entity.Property(sp => sp.IdCardChangeCount).HasDefaultValue(0);
             entity.Property(sp => sp.Bio).HasMaxLength(1000);
 
             entity.HasOne(sp => sp.User)
@@ -151,6 +159,148 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(br => br.OfferedBook)
                 .WithMany()
                 .HasForeignKey(br => br.OfferedBookId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ExchangeOffer configuration (1:1 with BookRequest)
+        modelBuilder.Entity<ExchangeOffer>(entity =>
+        {
+            entity.ToTable("ExchangeOffers");
+            entity.HasKey(eo => eo.ExchangeOfferId);
+            entity.Property(eo => eo.Title).IsRequired().HasMaxLength(250);
+            entity.Property(eo => eo.Author).IsRequired().HasMaxLength(200);
+            entity.Property(eo => eo.Isbn).HasMaxLength(50);
+            entity.Property(eo => eo.Edition).HasMaxLength(50);
+            entity.Property(eo => eo.PublicationYear).HasMaxLength(20);
+            entity.Property(eo => eo.CourseCode).HasMaxLength(50);
+            entity.Property(eo => eo.Description).IsRequired().HasMaxLength(2500);
+            entity.Property(eo => eo.Notes).HasMaxLength(1000);
+            entity.Property(eo => eo.ImageUrl).HasMaxLength(300);
+
+            entity.HasIndex(eo => eo.RequestId).IsUnique();
+
+            entity.HasOne(eo => eo.Request)
+                .WithOne(r => r.ExchangeOffer)
+                .HasForeignKey<ExchangeOffer>(eo => eo.RequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(eo => eo.Category)
+                .WithMany()
+                .HasForeignKey(eo => eo.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(eo => eo.Department)
+                .WithMany()
+                .HasForeignKey(eo => eo.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(eo => eo.OfferedBookListing)
+                .WithMany(b => b.ExchangeOffersAsOfferedListing)
+                .HasForeignKey(eo => eo.OfferedBookListingId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // WishlistItem configuration (unique per User and Book)
+        modelBuilder.Entity<WishlistItem>(entity =>
+        {
+            entity.ToTable("WishlistItems");
+            entity.HasKey(w => w.WishlistItemId);
+
+            entity.HasIndex(w => new { w.UserId, w.BookId }).IsUnique();
+
+            entity.HasOne(w => w.User)
+                .WithMany(u => u.WishlistItems)
+                .HasForeignKey(w => w.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(w => w.Book)
+                .WithMany(b => b.WishlistItems)
+                .HasForeignKey(w => w.BookId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // WantedBook configuration
+        modelBuilder.Entity<WantedBook>(entity =>
+        {
+            entity.ToTable("WantedBooks");
+            entity.HasKey(wb => wb.WantedBookId);
+            entity.Property(wb => wb.Title).IsRequired().HasMaxLength(250);
+            entity.Property(wb => wb.Author).HasMaxLength(200);
+            entity.Property(wb => wb.Isbn).HasMaxLength(50);
+            entity.Property(wb => wb.CourseCode).HasMaxLength(50);
+            entity.Property(wb => wb.MaxBudget).HasPrecision(18, 2);
+            entity.Property(wb => wb.Description).HasMaxLength(1500);
+
+            entity.HasIndex(wb => new { wb.UserId, wb.Status });
+            entity.HasIndex(wb => wb.Title);
+            entity.HasIndex(wb => wb.Isbn);
+
+            entity.HasOne(wb => wb.User)
+                .WithMany(u => u.WantedBooks)
+                .HasForeignKey(wb => wb.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(wb => wb.Category)
+                .WithMany()
+                .HasForeignKey(wb => wb.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(wb => wb.Department)
+                .WithMany()
+                .HasForeignKey(wb => wb.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Notification configuration
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.ToTable("Notifications");
+            entity.HasKey(n => n.NotificationId);
+            entity.Property(n => n.Title).IsRequired().HasMaxLength(150);
+            entity.Property(n => n.Message).IsRequired().HasMaxLength(500);
+            entity.Property(n => n.RelatedEntityType).HasMaxLength(50);
+            entity.Property(n => n.NavigationUrl).HasMaxLength(250);
+
+            entity.HasIndex(n => new { n.UserId, n.IsRead });
+            entity.HasIndex(n => n.CreatedAt);
+
+            entity.HasOne(n => n.User)
+                .WithMany(u => u.Notifications)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Conversation configuration (1:1 with BookRequest)
+        modelBuilder.Entity<Conversation>(entity =>
+        {
+            entity.ToTable("Conversations");
+            entity.HasKey(c => c.ConversationId);
+
+            entity.HasIndex(c => c.RequestId).IsUnique();
+
+            entity.HasOne(c => c.Request)
+                .WithOne(r => r.Conversation)
+                .HasForeignKey<Conversation>(c => c.RequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Message configuration
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.ToTable("Messages");
+            entity.HasKey(m => m.MessageId);
+            entity.Property(m => m.Content).IsRequired().HasMaxLength(2000);
+
+            entity.HasIndex(m => new { m.ConversationId, m.SentAt });
+
+            entity.HasOne(m => m.Conversation)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(m => m.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(m => m.Sender)
+                .WithMany(u => u.SentMessages)
+                .HasForeignKey(m => m.SenderId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

@@ -12,7 +12,7 @@ namespace CampusBook.Tests;
 
 public class BookRequestWorkflowTests
 {
-    private (BookRequestFacade facade, ApplicationDbContext context, User owner, User requester, Book donationBook, Book exchangeBook, Book requesterTradeBook)
+    private (BookRequestFacade facade, ApplicationDbContext context, User owner, User requester, Book saleBook, Book exchangeBook, Book requesterTradeBook)
         SetupExchangeEnvironment(string dbName)
     {
         var context = TestDbContextFactory.Create(dbName);
@@ -20,11 +20,14 @@ public class BookRequestWorkflowTests
         var bookRepo = new BookRepository(context);
         var userRepo = new UserRepository(context);
         var lookupRepo = new LookupRepository(context);
+        var wantedBookRepo = new WantedBookRepository(context);
+        var notificationRepo = new NotificationRepository(context);
+        var conversationRepo = new ConversationRepository(context);
         var fileStorageMock = new Mock<IFileStorageService>();
         var bookFacadeLogger = NullLogger<BookFacade>.Instance;
         var requestFacadeLogger = NullLogger<BookRequestFacade>.Instance;
 
-        var bookFacade = new BookFacade(bookRepo, requestRepo, lookupRepo, fileStorageMock.Object, bookFacadeLogger);
+        var bookFacade = new BookFacade(bookRepo, requestRepo, lookupRepo, fileStorageMock.Object, wantedBookRepo, notificationRepo, bookFacadeLogger);
 
         var owner = new User
         {
@@ -52,16 +55,16 @@ public class BookRequestWorkflowTests
 
         context.Users.AddRange(owner, requester);
 
-        var donationBook = new Book
+        var saleBook = new Book
         {
             BookId = 1,
             Title = "Compilers: Principles, Techniques, and Tools",
             Author = "Aho, Lam, Sethi, Ullman",
             CategoryId = 1,
             Condition = BookCondition.Good,
-            ExchangeType = ExchangeType.Donation,
-            Price = 0.00m,
-            Description = "Dragon book for donation.",
+            ExchangeType = ExchangeType.Sale,
+            Price = 250.00m,
+            Description = "Dragon book for sale.",
             OwnerId = owner.UserId,
             Status = BookStatus.Available
         };
@@ -94,21 +97,21 @@ public class BookRequestWorkflowTests
             Status = BookStatus.Available
         };
 
-        context.Books.AddRange(donationBook, exchangeBook, requesterTradeBook);
+        context.Books.AddRange(saleBook, exchangeBook, requesterTradeBook);
         context.SaveChanges();
 
-        var facade = new BookRequestFacade(requestRepo, bookRepo, userRepo, bookFacade, requestFacadeLogger);
-        return (facade, context, owner, requester, donationBook, exchangeBook, requesterTradeBook);
+        var facade = new BookRequestFacade(requestRepo, bookRepo, userRepo, bookFacade, lookupRepo, fileStorageMock.Object, notificationRepo, conversationRepo, requestFacadeLogger);
+        return (facade, context, owner, requester, saleBook, exchangeBook, requesterTradeBook);
     }
 
     [Fact]
     public async Task CreateRequestAsync_WhenRequestingOwnBook_IsRejected()
     {
         // Arrange
-        var (facade, _, owner, _, donationBook, _, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
+        var (facade, _, owner, _, saleBook, _, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
         var model = new CreateRequestViewModel
         {
-            BookId = donationBook.BookId,
+            BookId = saleBook.BookId,
             RequestMessage = "Self request attempt"
         };
 
@@ -124,10 +127,10 @@ public class BookRequestWorkflowTests
     public async Task CreateRequestAsync_DuplicateActiveRequest_IsRejected()
     {
         // Arrange
-        var (facade, _, _, requester, donationBook, _, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
+        var (facade, _, _, requester, saleBook, _, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
         var model = new CreateRequestViewModel
         {
-            BookId = donationBook.BookId,
+            BookId = saleBook.BookId,
             RequestMessage = "First request"
         };
         var firstResult = await facade.CreateRequestAsync(requester.UserId, model);
@@ -142,14 +145,17 @@ public class BookRequestWorkflowTests
     }
 
     [Fact]
-    public async Task CreateRequestAsync_BookForBookExchange_WithoutOfferedBook_IsRejected()
+    public async Task CreateRequestAsync_BookForBookExchange_WithoutStructuredOffer_IsRejected()
     {
         // Arrange
         var (facade, _, _, requester, _, exchangeBook, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
         var model = new CreateRequestViewModel
         {
             BookId = exchangeBook.BookId,
-            OfferedBookId = null, // Missing offered book for exchange listing
+            OfferTitle = "", // Missing required structured offer title
+            OfferAuthor = "",
+            OfferCategoryId = 0,
+            OfferDescription = "",
             RequestMessage = "Trade request"
         };
 
@@ -158,14 +164,14 @@ public class BookRequestWorkflowTests
 
         // Assert
         Assert.False(result.Success);
-        Assert.Contains("select one of your available books", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Offered book title is required", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
     public async Task AcceptRequestAsync_ReservesBook_AndInvalidatesOtherPendingRequests()
     {
         // Arrange
-        var (facade, context, owner, requester, donationBook, _, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
+        var (facade, context, owner, requester, saleBook, _, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
 
         // Create second student
         var thirdStudent = new User
@@ -183,9 +189,9 @@ public class BookRequestWorkflowTests
         await context.SaveChangesAsync();
 
         // Requester 1 submits request
-        var req1Result = await facade.CreateRequestAsync(requester.UserId, new CreateRequestViewModel { BookId = donationBook.BookId });
+        var req1Result = await facade.CreateRequestAsync(requester.UserId, new CreateRequestViewModel { BookId = saleBook.BookId });
         // Requester 2 submits request for the same book
-        var req2Result = await facade.CreateRequestAsync(thirdStudent.UserId, new CreateRequestViewModel { BookId = donationBook.BookId });
+        var req2Result = await facade.CreateRequestAsync(thirdStudent.UserId, new CreateRequestViewModel { BookId = saleBook.BookId });
 
         // Act - Owner accepts Requester 1's request
         var acceptResult = await facade.AcceptRequestAsync(req1Result.Data, owner.UserId);
@@ -194,7 +200,7 @@ public class BookRequestWorkflowTests
         Assert.True(acceptResult.Success);
 
         // Verify book is now Reserved
-        var freshBook = await context.Books.FindAsync(donationBook.BookId);
+        var freshBook = await context.Books.FindAsync(saleBook.BookId);
         Assert.Equal(BookStatus.Reserved, freshBook!.Status);
 
         // Verify Requester 1's request is Accepted
@@ -207,7 +213,7 @@ public class BookRequestWorkflowTests
     }
 
     [Fact]
-    public async Task AcceptTradeRequest_ReservesBothRequestedAndOfferedBooks()
+    public async Task AcceptTradeRequest_ReservesBothRequestedAndOfferedBooks_AndCreatesConversation()
     {
         // Arrange
         var (facade, context, owner, requester, _, exchangeBook, requesterTradeBook) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
@@ -215,7 +221,12 @@ public class BookRequestWorkflowTests
         var model = new CreateRequestViewModel
         {
             BookId = exchangeBook.BookId,
-            OfferedBookId = requesterTradeBook.BookId,
+            OfferTitle = requesterTradeBook.Title,
+            OfferAuthor = requesterTradeBook.Author,
+            OfferCategoryId = requesterTradeBook.CategoryId,
+            OfferCondition = requesterTradeBook.Condition,
+            OfferDescription = "Great condition, ready to swap.",
+            OfferedBookListingId = requesterTradeBook.BookId,
             RequestMessage = "Let's trade books!"
         };
 
@@ -233,18 +244,22 @@ public class BookRequestWorkflowTests
         var freshOfferedBook = await context.Books.FindAsync(requesterTradeBook.BookId);
         Assert.Equal(BookStatus.Reserved, freshRequestedBook!.Status);
         Assert.Equal(BookStatus.Reserved, freshOfferedBook!.Status);
+
+        // Verify Conversation was automatically created
+        var conversation = context.Conversations.FirstOrDefault(c => c.RequestId == createResult.Data);
+        Assert.NotNull(conversation);
     }
 
     [Fact]
     public async Task CancelRequestAsync_WhenAccepted_RestoresAvailability()
     {
         // Arrange
-        var (facade, context, owner, requester, donationBook, _, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
-        var createResult = await facade.CreateRequestAsync(requester.UserId, new CreateRequestViewModel { BookId = donationBook.BookId });
+        var (facade, context, owner, requester, saleBook, _, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
+        var createResult = await facade.CreateRequestAsync(requester.UserId, new CreateRequestViewModel { BookId = saleBook.BookId });
         await facade.AcceptRequestAsync(createResult.Data, owner.UserId);
 
         // Book is reserved
-        var reservedBook = await context.Books.FindAsync(donationBook.BookId);
+        var reservedBook = await context.Books.FindAsync(saleBook.BookId);
         Assert.Equal(BookStatus.Reserved, reservedBook!.Status);
 
         // Act - Requester cancels the request
@@ -252,7 +267,7 @@ public class BookRequestWorkflowTests
 
         // Assert
         Assert.True(cancelResult.Success);
-        var restoredBook = await context.Books.FindAsync(donationBook.BookId);
+        var restoredBook = await context.Books.FindAsync(saleBook.BookId);
         Assert.Equal(BookStatus.Available, restoredBook!.Status); // Restored!
     }
 
@@ -260,8 +275,8 @@ public class BookRequestWorkflowTests
     public async Task ConfirmHandoverAsync_RequiresBothParties_ToCompleteExchange()
     {
         // Arrange
-        var (facade, context, owner, requester, donationBook, _, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
-        var createResult = await facade.CreateRequestAsync(requester.UserId, new CreateRequestViewModel { BookId = donationBook.BookId });
+        var (facade, context, owner, requester, saleBook, _, _) = SetupExchangeEnvironment(Guid.NewGuid().ToString());
+        var createResult = await facade.CreateRequestAsync(requester.UserId, new CreateRequestViewModel { BookId = saleBook.BookId });
         await facade.AcceptRequestAsync(createResult.Data, owner.UserId);
 
         // Act 1 - Only Owner confirms handover
@@ -282,7 +297,7 @@ public class BookRequestWorkflowTests
         Assert.True(finalRequest.RequesterConfirmed);
 
         // Book is now Completed (no longer available in catalogue)
-        var finalizedBook = await context.Books.FindAsync(donationBook.BookId);
+        var finalizedBook = await context.Books.FindAsync(saleBook.BookId);
         Assert.Equal(BookStatus.Completed, finalizedBook!.Status);
     }
 }

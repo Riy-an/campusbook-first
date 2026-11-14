@@ -18,6 +18,8 @@ public class BookListingTests
         var bookRepo = new BookRepository(context);
         var requestRepo = new BookRequestRepository(context);
         var lookupRepo = new LookupRepository(context);
+        var wantedBookRepo = new WantedBookRepository(context);
+        var notificationRepo = new NotificationRepository(context);
         var fileStorageMock = new Mock<IFileStorageService>();
         var logger = NullLogger<BookFacade>.Instance;
 
@@ -46,12 +48,12 @@ public class BookListingTests
         context.Users.AddRange(owner, otherUser);
         context.SaveChanges();
 
-        var facade = new BookFacade(bookRepo, requestRepo, lookupRepo, fileStorageMock.Object, logger);
+        var facade = new BookFacade(bookRepo, requestRepo, lookupRepo, fileStorageMock.Object, wantedBookRepo, notificationRepo, logger);
         return (facade, context, owner, otherUser);
     }
 
     [Fact]
-    public async Task CreateBookAsync_DonationType_ForcesPriceToZero()
+    public async Task CreateBookAsync_DonationType_IsRejected()
     {
         // Arrange
         var (facade, context, owner, _) = SetupBookEnvironment(Guid.NewGuid().ToString());
@@ -62,8 +64,32 @@ public class BookListingTests
             CategoryId = 1,
             Condition = BookCondition.Good,
             ExchangeType = ExchangeType.Donation,
-            Price = 25.00m, // User attempted to enter a price on a donation
+            Price = 0.00m,
             Description = "Giving away to any 1st year engineering student."
+        };
+
+        // Act
+        var result = await facade.CreateBookAsync(owner.UserId, model);
+
+        // Assert - In Phase 2, Free Donation is removed from active listings
+        Assert.False(result.Success);
+        Assert.Contains("Donation listings are no longer supported", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CreateBookAsync_ExchangeType_ForcesPriceToZero()
+    {
+        // Arrange
+        var (facade, context, owner, _) = SetupBookEnvironment(Guid.NewGuid().ToString());
+        var model = new BookCreateViewModel
+        {
+            Title = "Introduction to Algorithms",
+            Author = "CLRS",
+            CategoryId = 1,
+            Condition = BookCondition.Good,
+            ExchangeType = ExchangeType.Exchange,
+            Price = 50.00m, // Price passed by mistake or intentionally
+            Description = "Want to trade for Operating Systems book."
         };
 
         // Act
@@ -73,7 +99,7 @@ public class BookListingTests
         Assert.True(result.Success);
         var book = await context.Books.FindAsync(result.Data);
         Assert.NotNull(book);
-        Assert.Equal(0.00m, book.Price); // Business rule: Donation is strictly free!
+        Assert.Equal(0.00m, book.Price); // Exchange listings are strictly 0 Taka
         Assert.Equal(BookStatus.Available, book.Status);
     }
 
@@ -183,5 +209,45 @@ public class BookListingTests
         // Assert
         Assert.False(result.Success);
         Assert.Contains("while it is reserved", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UpdateBookAsync_DonationType_IsRejected()
+    {
+        // Arrange
+        var (facade, context, owner, _) = SetupBookEnvironment(Guid.NewGuid().ToString());
+        var book = new Book
+        {
+            Title = "Original Book",
+            Author = "Author",
+            CategoryId = 1,
+            Condition = BookCondition.Good,
+            ExchangeType = ExchangeType.Sale,
+            Price = 20.00m,
+            Description = "Available book",
+            OwnerId = owner.UserId,
+            Status = BookStatus.Available
+        };
+        context.Books.Add(book);
+        await context.SaveChangesAsync();
+
+        var editModel = new BookEditViewModel
+        {
+            BookId = book.BookId,
+            Title = "Updated Book",
+            Author = "Author",
+            CategoryId = 1,
+            Condition = BookCondition.Good,
+            ExchangeType = ExchangeType.Donation, // Attempt to change to Donation
+            Price = 0.00m,
+            Description = "Updated desc"
+        };
+
+        // Act
+        var result = await facade.UpdateBookAsync(owner.UserId, editModel);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("Donation listings are no longer supported", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
 }

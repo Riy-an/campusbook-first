@@ -32,6 +32,10 @@ public static class DependencyInjection
         services.AddScoped<IBookRepository, BookRepository>();
         services.AddScoped<IBookRequestRepository, BookRequestRepository>();
         services.AddScoped<ILookupRepository, LookupRepository>();
+        services.AddScoped<IWishlistRepository, WishlistRepository>();
+        services.AddScoped<IWantedBookRepository, WantedBookRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IConversationRepository, ConversationRepository>();
 
         // 3. Application Infrastructure Services
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -44,6 +48,11 @@ public static class DependencyInjection
         services.AddScoped<IBookFacade, BookFacade>();
         services.AddScoped<IBookRequestFacade, BookRequestFacade>();
         services.AddScoped<IDashboardFacade, DashboardFacade>();
+        services.AddScoped<IWishlistFacade, WishlistFacade>();
+        services.AddScoped<IWantedBookFacade, WantedBookFacade>();
+        services.AddScoped<INotificationFacade, NotificationFacade>();
+        services.AddScoped<IConversationFacade, ConversationFacade>();
+        services.AddScoped<IExchangeHistoryFacade, ExchangeHistoryFacade>();
 
         return services;
     }

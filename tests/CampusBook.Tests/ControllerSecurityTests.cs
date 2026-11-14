@@ -30,6 +30,17 @@ public class ControllerSecurityTests
     }
 
     [Theory]
+    [InlineData(typeof(WishlistController))]
+    [InlineData(typeof(NotificationsController))]
+    [InlineData(typeof(MessagesController))]
+    [InlineData(typeof(HistoryController))]
+    public void Phase2Controllers_HaveAuthorizeAttribute(Type controllerType)
+    {
+        var authAttr = controllerType.GetCustomAttribute<AuthorizeAttribute>();
+        Assert.NotNull(authAttr);
+    }
+
+    [Theory]
     [InlineData("Create")]
     [InlineData("Edit")]
     [InlineData("MyBooks")]

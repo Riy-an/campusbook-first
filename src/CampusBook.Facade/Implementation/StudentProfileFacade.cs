@@ -51,12 +51,14 @@ public class StudentProfileFacade : IStudentProfileFacade
             StudentId = user.StudentId,
             FullName = user.FullName,
             Email = user.Email,
+            UniversityEmail = profile?.UniversityEmail ?? string.Empty,
             Department = profile?.Department ?? "Unassigned",
             Batch = profile?.Batch ?? "Unassigned",
             Semester = profile?.Semester,
             PhoneNumber = profile?.PhoneNumber,
             ProfilePictureUrl = profile?.ProfilePictureUrl,
             StudentIdCardUrl = profile?.StudentIdCardUrl,
+            IdCardChangeCount = profile?.IdCardChangeCount ?? 0,
             Bio = profile?.Bio,
             IsEmailConfirmed = user.IsEmailConfirmed,
             RoleName = user.Role?.RoleName ?? "Student",
@@ -93,13 +95,16 @@ public class StudentProfileFacade : IStudentProfileFacade
         {
             StudentId = user.StudentId,
             Email = user.Email,
+            UniversityEmail = profile?.UniversityEmail ?? string.Empty,
             FullName = user.FullName,
             Department = profile?.Department ?? string.Empty,
             Batch = profile?.Batch ?? string.Empty,
             Semester = profile?.Semester,
             PhoneNumber = profile?.PhoneNumber,
             Bio = profile?.Bio,
-            CurrentProfilePictureUrl = profile?.ProfilePictureUrl
+            CurrentProfilePictureUrl = profile?.ProfilePictureUrl,
+            CurrentStudentIdCardUrl = profile?.StudentIdCardUrl,
+            IdCardChangeCount = profile?.IdCardChangeCount ?? 0
         };
     }
 
@@ -144,6 +149,28 @@ public class StudentProfileFacade : IStudentProfileFacade
 
             var savedPath = await _fileStorageService.SaveFileAsync(model.ProfilePicture, "profiles");
             user.StudentProfile.ProfilePictureUrl = savedPath;
+        }
+
+        // Handle student ID card upload if provided
+        if (model.StudentIdCard != null)
+        {
+            // Limit: one user can only change their ID card photo 3 times
+            if (user.StudentProfile.IdCardChangeCount >= 3)
+            {
+                return ServiceResult.Fail("You have reached the maximum limit of 3 ID card photo changes.");
+            }
+
+            if (!_fileStorageService.IsValidImage(model.StudentIdCard, out var cardError))
+            {
+                return ServiceResult.Fail(cardError ?? "Invalid ID card image file.");
+            }
+
+            // Remove old ID card photo if exists
+            _fileStorageService.DeleteFile(user.StudentProfile.StudentIdCardUrl);
+
+            var savedCardPath = await _fileStorageService.SaveFileAsync(model.StudentIdCard, "idcards");
+            user.StudentProfile.StudentIdCardUrl = savedCardPath;
+            user.StudentProfile.IdCardChangeCount++;
         }
 
         await _userRepository.UpdateAsync(user);

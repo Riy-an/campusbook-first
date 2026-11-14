@@ -1,0 +1,155 @@
+@model WantedBookDetailsViewModel
+@{
+    ViewData["Title"] = $"Wanted: {Model.Title}";
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a asp-action="Index">Wanted Books</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Wanted Post Details -->
+    <div class="col-lg-7">
+        <div class="card card-campus shadow-sm border-0 p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
+                <div>
+                    <span class="badge @(Model.Status switch {
+                        WantedBookStatus.Active => "bg-success",
+                        WantedBookStatus.Fulfilled => "bg-info text-dark",
+                        _ => "bg-secondary"
+                    }) mb-2">@Model.Status</span>
+                    <h1 class="h4 fw-bold mb-1">@Model.Title</h1>
+                    <div class="text-muted small">
+                        @(string.IsNullOrEmpty(Model.Author) ? "Any Author" : $"by {Model.Author}")
+                    </div>
+                </div>
+
+                @if (Model.IsOwner && Model.Status == WantedBookStatus.Active)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.WantedBookId" class="btn btn-sm btn-outline-primary">Edit Request</a>
+                }
+            </div>
+
+            <ul class="list-group list-group-flush small mb-4">
+                <li class="list-group-item px-0 d-flex justify-content-between">
+                    <span class="text-muted">Subject Category:</span>
+                    <strong>@Model.CategoryName</strong>
+                </li>
+                @if (!string.IsNullOrEmpty(Model.DepartmentName))
+                {
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted">Department:</span>
+                        <strong>@Model.DepartmentName</strong>
+                    </li>
+                }
+                @if (!string.IsNullOrEmpty(Model.CourseCode))
+                {
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted">Course Code:</span>
+                        <span>@Model.CourseCode</span>
+                    </li>
+                }
+                @if (!string.IsNullOrEmpty(Model.Isbn))
+                {
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted">ISBN:</span>
+                        <span>@Model.Isbn</span>
+                    </li>
+                }
+                <li class="list-group-item px-0 d-flex justify-content-between">
+                    <span class="text-muted">Preferred Condition:</span>
+                    <span>@(Model.PreferredCondition.HasValue ? Model.PreferredCondition.Value.ToString() : "Any Condition")</span>
+                </li>
+                <li class="list-group-item px-0 d-flex justify-content-between">
+                    <span class="text-muted">Max Budget:</span>
+                    <strong class="text-primary">@(Model.MaxBudget.HasValue ? Model.MaxBudget.Value.ToPriceText() : "Flexible / Any")</strong>
+                </li>
+                <li class="list-group-item px-0 d-flex justify-content-between">
+                    <span class="text-muted">Preferred Type:</span>
+                    <span>@(Model.PreferredExchangeType.HasValue ? Model.PreferredExchangeType.Value.ToString() : "Either Sale or Exchange")</span>
+                </li>
+                <li class="list-group-item px-0 d-flex justify-content-between">
+                    <span class="text-muted">Posted:</span>
+                    <span>@Model.CreatedAt.ToDateText()</span>
+                </li>
+            </ul>
+
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div class="mb-4">
+                    <h2 class="h6 fw-bold text-muted text-uppercase mb-2">Requester's Notes</h2>
+                    <div class="p-3 bg-light rounded border text-secondary" style="white-space: pre-line;">
+                        @Model.Description
+                    </div>
+                </div>
+            }
+
+            <div class="border-top pt-3 d-flex justify-content-between align-items-center small text-muted">
+                <span>Requested by <strong>@Model.PosterName</strong> (@Model.PosterDepartment)</span>
+                @if (!Model.IsOwner)
+                {
+                    <a asp-controller="Books" asp-action="Create" class="btn btn-sm btn-campus">I Have This Book (List It!)</a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Matching Available Listings in Catalogue -->
+    <div class="col-lg-5">
+        <div class="card card-campus shadow-sm border-0 p-4">
+            <h2 class="h5 fw-bold mb-1">Matching Available Books 📚</h2>
+            <p class="text-muted small mb-3">Database-identified listings currently available on campus that match this request.</p>
+
+            @if (!Model.MatchingAvailableListings.Any())
+            {
+                <div class="alert alert-light border small text-muted text-center py-4">
+                    🔍 No exact available listings currently match this wanted request.
+                    Check back soon or share this post with your classmates!
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var book in Model.MatchingAvailableListings)
+                    {
+                        <div class="card border p-3">
+                            <div class="d-flex gap-3 align-items-center">
+                                @if (!string.IsNullOrEmpty(book.ImageUrl))
+                                {
+                                    <img src="@book.ImageUrl" alt="@book.Title" style="width: 50px; height: 65px; object-fit: cover; border-radius: 4px;" />
+                                }
+                                else
+                                {
+                                    <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="width: 50px; height: 65px; border-radius: 4px;">📖</div>
+                                }
+                                <div class="flex-grow-1">
+                                    <h3 class="h6 fw-bold mb-0 text-truncate" style="max-width: 220px;" title="@book.Title">
+                                        <a asp-controller="Books" asp-action="Details" asp-route-id="@book.BookId" class="text-dark text-decoration-none">
+                                            @book.Title
+                                        </a>
+                                    </h3>
+                                    <div class="small text-muted mb-1">by @book.Author</div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge @(book.ExchangeType == ExchangeType.Sale ? "badge-type-sale" : "badge-type-exchange")">@book.ExchangeType</span>
+                                        <span class="fw-bold text-primary small">@book.Price.ToPriceText()</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center small">
+                                <span class="text-muted">Owner: @book.OwnerName</span>
+                                <a asp-controller="Books" asp-action="Details" asp-route-id="@book.BookId" class="btn btn-sm btn-campus-outline py-0">View</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

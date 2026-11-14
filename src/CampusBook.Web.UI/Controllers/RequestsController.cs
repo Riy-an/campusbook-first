@@ -53,11 +53,6 @@ public class RequestsController : Controller
     public async Task<IActionResult> Create(int bookId)
     {
         var userId = GetCurrentUserId();
-        if (!await _userFacade.IsEmailConfirmedAsync(userId))
-        {
-            TempData["ErrorMessage"] = "You must confirm your university email before you can request books.";
-            return RedirectToAction("Details", "Books", new { id = bookId });
-        }
 
         var viewModel = await _requestFacade.GetCreateRequestViewModelAsync(bookId, userId);
         if (viewModel == null)
@@ -87,6 +82,8 @@ public class RequestsController : Controller
                 model.ImageUrl = reloadModel.ImageUrl;
                 model.OwnerName = reloadModel.OwnerName;
                 model.UserAvailableBooks = reloadModel.UserAvailableBooks;
+                model.Categories = reloadModel.Categories;
+                model.Departments = reloadModel.Departments;
             }
             return View(model);
         }
@@ -105,6 +102,8 @@ public class RequestsController : Controller
                 model.ImageUrl = reloadModel.ImageUrl;
                 model.OwnerName = reloadModel.OwnerName;
                 model.UserAvailableBooks = reloadModel.UserAvailableBooks;
+                model.Categories = reloadModel.Categories;
+                model.Departments = reloadModel.Departments;
             }
             return View(model);
         }

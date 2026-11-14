@@ -12,5 +12,6 @@ public interface IBookRequestRepository : IRepository<BookRequest>
     Task<int> CountPendingSentByUserAsync(int userId);
     Task<int> CountPendingReceivedByUserAsync(int userId);
     Task<int> CountCompletedExchangesByUserAsync(int userId);
+    Task<IEnumerable<BookRequest>> GetCompletedTransactionsByUserAsync(int userId);
 }
 

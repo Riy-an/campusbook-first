@@ -89,8 +89,20 @@
                 else
                 {
                     <a asp-controller="Requests" asp-action="Create" asp-route-bookId="@Model.BookId" class="btn btn-campus py-2 fs-6">
-                        Request This Book
+                        @(Model.ExchangeType == ExchangeType.Exchange ? "Propose Book Exchange" : "Request to Purchase")
                     </a>
+                }
+
+                @if (Model.IsViewerAuthenticated && !Model.IsOwner)
+                {
+                    <form asp-controller="Wishlist" asp-action="Toggle" method="post" class="mt-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="bookId" value="@Model.BookId" />
+                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                        <button type="submit" class="btn @(ViewBag.IsInWishlist == true ? "btn-danger" : "btn-outline-secondary") w-100 py-2 small fw-semibold">
+                            @(ViewBag.IsInWishlist == true ? "💖 Saved in Wishlist (Click to Remove)" : "🤍 Add to Wishlist")
+                        </button>
+                    </form>
                 }
             </div>
         </div>

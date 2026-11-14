@@ -4,82 +4,158 @@
 }
 
 <div class="row justify-content-center py-4">
-    <div class="col-lg-8">
-        <div class="card card-campus shadow-sm">
+    <div class="col-lg-9">
+        <div class="card card-campus shadow-sm border-0">
             <div class="card-header bg-white p-4 border-bottom">
-                <h1 class="h4 fw-bold mb-1">Request Book</h1>
-                <p class="text-muted small mb-0">Send a formal request to the student book owner</p>
+                <h1 class="h4 fw-bold mb-1">
+                    @(Model.ExchangeType == ExchangeType.Exchange ? "Propose Book-for-Book Exchange" : "Submit Purchase Request")
+                </h1>
+                <p class="text-muted small mb-0">
+                    @(Model.ExchangeType == ExchangeType.Exchange 
+                        ? "Describe the academic textbook you are offering in return for this exchange." 
+                        : "Send a purchase request to coordinate an on-campus meeting and payment.")
+                </p>
             </div>
             <div class="card-body p-4 p-md-5">
                 <!-- Book Summary Banner -->
                 <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 border mb-4">
                     @if (!string.IsNullOrEmpty(Model.ImageUrl))
                     {
-                        <img src="@Model.ImageUrl" alt="@Model.BookTitle" style="width: 60px; height: 80px; object-fit: cover; border-radius: 4px;" />
+                        <img src="@Model.ImageUrl" alt="@Model.BookTitle" style="width: 65px; height: 85px; object-fit: cover; border-radius: 6px;" />
                     }
                     else
                     {
-                        <div class="bg-white border text-muted d-flex align-items-center justify-content-center" style="width: 60px; height: 80px; border-radius: 4px;">
+                        <div class="bg-white border text-muted d-flex align-items-center justify-content-center" style="width: 65px; height: 85px; border-radius: 6px;">
                             📖
                         </div>
                     }
                     <div>
-                        <span class="badge @(Model.ExchangeType switch {
-                            ExchangeType.Donation => "badge-type-donation",
-                            ExchangeType.Sale => "badge-type-sale",
-                            _ => "badge-type-exchange"
-                        }) mb-1">@Model.ExchangeType</span>
+                        <span class="badge @(Model.ExchangeType == ExchangeType.Sale ? "badge-type-sale" : "badge-type-exchange") mb-1">
+                            @Model.ExchangeType
+                        </span>
                         <h2 class="h6 fw-bold mb-1">@Model.BookTitle</h2>
                         <div class="small text-muted">by @Model.BookAuthor &bull; Listed by <strong>@Model.OwnerName</strong></div>
                         <div class="fw-bold text-primary small mt-1">@Model.Price.ToPriceText()</div>
                     </div>
                 </div>
 
-                <form asp-action="Create" method="post">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="BookId" />
+                    <input type="hidden" asp-for="ExchangeType" />
 
                     <div asp-validation-summary="ModelOnly" class="text-danger small mb-4"></div>
 
                     @if (Model.ExchangeType == ExchangeType.Exchange)
                     {
-                        <div class="card border-primary-subtle bg-light mb-4">
+                        <div class="card border-primary bg-primary-subtle bg-opacity-10 mb-4">
+                            <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                                <span>🔄 The Book You Are Offering in Return</span>
+                                <span class="badge bg-primary">Required For Exchange</span>
+                            </div>
                             <div class="card-body">
-                                <h3 class="h6 fw-bold text-primary mb-2">🔄 Book-for-Book Exchange Option</h3>
-                                <p class="small text-muted mb-3">The owner has offered this textbook for trade. Please select one of your available books to offer in exchange:</p>
-
-                                @if (!Model.UserAvailableBooks.Any())
+                                @if (Model.UserAvailableBooks.Any())
                                 {
-                                    <div class="alert alert-warning small mb-0">
-                                        ⚠️ You do not have any available books in your account to offer in trade.
-                                        Please <a asp-controller="Books" asp-action="Create" class="fw-bold">publish an available book first</a> before requesting a trade.
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="mb-2">
-                                        <label asp-for="OfferedBookId" class="form-label"></label>
-                                        <select asp-for="OfferedBookId" class="form-select" asp-items="Model.UserAvailableBooks">
-                                            <option value="">-- Choose a book you own to trade --</option>
+                                    <div class="mb-3 p-3 bg-white rounded border">
+                                        <label asp-for="OfferedBookListingId" class="form-label fw-semibold small"></label>
+                                        <select asp-for="OfferedBookListingId" id="userBooksSelect" class="form-select form-select-sm" asp-items="Model.UserAvailableBooks">
+                                            <option value="">-- Optional: Autofill from one of your active listings --</option>
                                         </select>
-                                        <span asp-validation-for="OfferedBookId" class="text-danger small"></span>
+                                        <div class="form-text small">Select an existing listing to pre-fill the form, or fill in details below manually.</div>
                                     </div>
                                 }
+
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <label asp-for="OfferTitle" class="form-label fw-semibold small">Book Title <span class="text-danger">*</span></label>
+                                        <input asp-for="OfferTitle" id="offerTitleInput" class="form-control" placeholder="e.g. Introduction to Algorithms" />
+                                        <span asp-validation-for="OfferTitle" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label asp-for="OfferAuthor" class="form-label fw-semibold small">Author <span class="text-danger">*</span></label>
+                                        <input asp-for="OfferAuthor" id="offerAuthorInput" class="form-control" placeholder="e.g. Cormen, Leiserson" />
+                                        <span asp-validation-for="OfferAuthor" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label asp-for="OfferCategoryId" class="form-label fw-semibold small">Subject Category <span class="text-danger">*</span></label>
+                                        <select asp-for="OfferCategoryId" class="form-select" asp-items="Model.Categories">
+                                            <option value="">-- Select Category --</option>
+                                        </select>
+                                        <span asp-validation-for="OfferCategoryId" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label asp-for="OfferDepartmentId" class="form-label fw-semibold small"></label>
+                                        <select asp-for="OfferDepartmentId" class="form-select" asp-items="Model.Departments">
+                                            <option value="">-- Optional: Department --</option>
+                                        </select>
+                                        <span asp-validation-for="OfferDepartmentId" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label asp-for="OfferCondition" class="form-label fw-semibold small">Condition <span class="text-danger">*</span></label>
+                                        <select asp-for="OfferCondition" class="form-select">
+                                            <option value="New">New (Pristine, no marks)</option>
+                                            <option value="Good" selected>Good (Minor wear, light pencil)</option>
+                                            <option value="Fair">Fair (Readable, highlighted notes)</option>
+                                            <option value="Poor">Poor (Heavily used, all pages intact)</option>
+                                        </select>
+                                        <span asp-validation-for="OfferCondition" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label asp-for="OfferIsbn" class="form-label fw-semibold small"></label>
+                                        <input asp-for="OfferIsbn" class="form-control" placeholder="e.g. 9780262033848" />
+                                        <span asp-validation-for="OfferIsbn" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label asp-for="OfferEdition" class="form-label fw-semibold small"></label>
+                                        <input asp-for="OfferEdition" class="form-control" placeholder="e.g. 3rd Edition" />
+                                        <span asp-validation-for="OfferEdition" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label asp-for="OfferCourseCode" class="form-label fw-semibold small"></label>
+                                        <input asp-for="OfferCourseCode" class="form-control" placeholder="e.g. CSE-2201" />
+                                        <span asp-validation-for="OfferCourseCode" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label asp-for="OfferDescription" class="form-label fw-semibold small">Book Description <span class="text-danger">*</span></label>
+                                        <textarea asp-for="OfferDescription" class="form-control" rows="3" placeholder="Describe the textbook you are trading (edition details, relevance to courses, etc.)..."></textarea>
+                                        <span asp-validation-for="OfferDescription" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label asp-for="OfferNotes" class="form-label fw-semibold small"></label>
+                                        <input asp-for="OfferNotes" class="form-control" placeholder="e.g. Minor pencil notes in chapter 2; no missing pages" />
+                                        <span asp-validation-for="OfferNotes" class="text-danger small"></span>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label asp-for="OfferImage" class="form-label fw-semibold small"></label>
+                                        <input asp-for="OfferImage" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                                        <span asp-validation-for="OfferImage" class="text-danger small"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     }
 
                     <div class="mb-4">
-                        <label asp-for="RequestMessage" class="form-label"></label>
-                        <textarea asp-for="RequestMessage" class="form-control" rows="4" placeholder="Hello! I am taking this course this term and would love to arrange a convenient handover on campus (e.g. at the Student Union or Library)..."></textarea>
+                        <label asp-for="RequestMessage" class="form-label fw-semibold small"></label>
+                        <textarea asp-for="RequestMessage" class="form-control" rows="3" placeholder="Hello! I am taking this course this semester and would like to arrange a convenient meetup on campus (e.g. Central Library or Cafeteria)..."></textarea>
                         <span asp-validation-for="RequestMessage" class="text-danger small"></span>
-                        <small class="text-muted">Include your preferred meetup times or campus locations.</small>
+                        <div class="form-text small text-muted">Mention preferred meeting locations or times on campus.</div>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                         <a asp-controller="Books" asp-action="Details" asp-route-id="@Model.BookId" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-campus px-4 py-2" @(Model.ExchangeType == ExchangeType.Exchange && !Model.UserAvailableBooks.Any() ? "disabled" : "")>
-                            Submit Book Request
+                        <button type="submit" class="btn btn-campus px-4 py-2 shadow-sm">
+                            Submit Request
                         </button>
                     </div>
                 </form>
@@ -91,4 +167,3 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
-

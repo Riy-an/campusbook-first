@@ -124,11 +124,8 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // Store confirmation feedback
-        TempData["RegisteredEmail"] = model.Email;
-        TempData["DevConfirmationLink"] = _emailSender.LastGeneratedConfirmationLink;
-
-        return RedirectToAction(nameof(RegistrationConfirmation));
+        TempData["SuccessMessage"] = "Your student account has been registered successfully! You can now sign in with your credentials.";
+        return RedirectToAction(nameof(Login));
     }
 
     [HttpGet]

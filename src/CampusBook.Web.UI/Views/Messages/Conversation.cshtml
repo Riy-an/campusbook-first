@@ -1,0 +1,107 @@
+@model ConversationDetailsViewModel
+@{
+    ViewData["Title"] = $"Chat with {Model.OtherPartyName}";
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a asp-action="Index">Messages</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.OtherPartyName</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="card card-campus shadow-sm border-0 mb-4">
+    <!-- Conversation Header -->
+    <div class="card-header bg-white p-3 border-bottom d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            @if (!string.IsNullOrEmpty(Model.OtherPartyPhotoUrl))
+            {
+                <img src="@Model.OtherPartyPhotoUrl" alt="@Model.OtherPartyName" class="rounded-circle border" style="width: 44px; height: 44px; object-fit: cover;" />
+            }
+            else
+            {
+                <div class="rounded-circle bg-light border text-muted d-flex align-items-center justify-content-center fw-bold" style="width: 44px; height: 44px;">
+                    @Model.OtherPartyName.FirstOrDefault()
+                </div>
+            }
+            <div>
+                <h1 class="h6 fw-bold mb-0">@Model.OtherPartyName</h1>
+                <div class="small text-muted">@Model.OtherPartyDepartment &bull; Regarding <strong>@Model.BookTitle</strong></div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <a asp-controller="Requests" asp-action="Details" asp-route-id="@Model.RequestId" class="btn btn-outline-secondary btn-sm">
+                View Request #@Model.RequestId &rarr;
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="card-body p-4 bg-light" style="min-height: 380px; max-height: 520px; overflow-y: auto;" id="messagesContainer">
+        @if (!Model.Messages.Any())
+        {
+            <div class="text-center text-muted py-5">
+                <span class="fs-1 d-block mb-2">👋</span>
+                <p class="small mb-0">No messages yet. Send a message to coordinate where and when to meet on campus!</p>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var msg in Model.Messages)
+                {
+                    <div class="d-flex @(msg.IsFromCurrentUser ? "justify-content-end" : "justify-content-start")">
+                        <div class="card border-0 shadow-sm p-3 @(msg.IsFromCurrentUser ? "bg-primary text-white" : "bg-white")" style="max-width: 75%; border-radius: 12px;">
+                            <div class="small fw-semibold mb-1 @(msg.IsFromCurrentUser ? "text-white-50" : "text-muted")">
+                                @(msg.IsFromCurrentUser ? "You" : msg.SenderName) &bull; @msg.SentAt.ToDateTimeText()
+                            </div>
+                            <div style="white-space: pre-line; word-break: break-word;">
+                                @Html.Raw(msg.Content)
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Message Input Footer -->
+    <div class="card-footer bg-white p-3 border-top">
+        @if (Model.IsExchangeCompleted)
+        {
+            <div class="alert alert-secondary py-2 small mb-0 text-center">
+                🔒 This exchange is completed. Conversation is in read-only mode.
+            </div>
+        }
+        else
+        {
+            <form asp-action="Send" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="conversationId" value="@Model.ConversationId" />
+                <div class="input-group">
+                    <input type="text" name="messageContent" class="form-control" placeholder="Type a message (e.g. 'Can we meet at the Central Library tomorrow at 2 PM?')..." required maxlength="2000" autocomplete="off" />
+                    <button type="submit" class="btn btn-campus px-4">
+                        Send
+                    </button>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-scroll messages to bottom
+        window.addEventListener('load', function() {
+            var container = document.getElementById('messagesContainer');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        });
+    </script>
+}

@@ -10,12 +10,16 @@ public class ProfileDetailsViewModel
     public string StudentId { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string UniversityEmail { get; set; } = string.Empty;
     public string Department { get; set; } = string.Empty;
     public string Batch { get; set; } = string.Empty;
     public string? Semester { get; set; }
     public string? PhoneNumber { get; set; }
     public string? ProfilePictureUrl { get; set; }
     public string? StudentIdCardUrl { get; set; }
+    public int IdCardChangeCount { get; set; }
+    public int RemainingIdCardChanges => Math.Max(0, 3 - IdCardChangeCount);
+    public bool CanChangeIdCard => IdCardChangeCount < 3;
     public string? Bio { get; set; }
     public bool IsEmailConfirmed { get; set; }
     public string RoleName { get; set; } = string.Empty;
@@ -30,7 +34,12 @@ public class ProfileEditViewModel
     // Read-only sensitive fields displayed on form
     public string StudentId { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string UniversityEmail { get; set; } = string.Empty;
     public string? CurrentProfilePictureUrl { get; set; }
+    public string? CurrentStudentIdCardUrl { get; set; }
+    public int IdCardChangeCount { get; set; }
+    public int RemainingIdCardChanges => Math.Max(0, 3 - IdCardChangeCount);
+    public bool CanChangeIdCard => IdCardChangeCount < 3;
 
     // Editable permitted fields
     [Required(ErrorMessage = "Full Name is required.")]
@@ -63,6 +72,9 @@ public class ProfileEditViewModel
 
     [Display(Name = "Profile Photo (Optional)")]
     public IFormFile? ProfilePicture { get; set; }
+
+    [Display(Name = "University ID Card Photo")]
+    public IFormFile? StudentIdCard { get; set; }
 }
 
 public class PublicProfileViewModel

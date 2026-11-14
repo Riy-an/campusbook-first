@@ -15,6 +15,8 @@ public class BookFacade : IBookFacade
     private readonly IBookRequestRepository _requestRepository;
     private readonly ILookupRepository _lookupRepository;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IWantedBookRepository _wantedBookRepository;
+    private readonly INotificationRepository _notificationRepository;
     private readonly ILogger<BookFacade> _logger;
 
     public BookFacade(
@@ -22,12 +24,16 @@ public class BookFacade : IBookFacade
         IBookRequestRepository requestRepository,
         ILookupRepository lookupRepository,
         IFileStorageService fileStorageService,
+        IWantedBookRepository wantedBookRepository,
+        INotificationRepository notificationRepository,
         ILogger<BookFacade> logger)
     {
         _bookRepository = bookRepository;
         _requestRepository = requestRepository;
         _lookupRepository = lookupRepository;
         _fileStorageService = fileStorageService;
+        _wantedBookRepository = wantedBookRepository;
+        _notificationRepository = notificationRepository;
         _logger = logger;
     }
 
@@ -124,7 +130,7 @@ public class BookFacade : IBookFacade
         // Pricing business rules
         if (model.ExchangeType == ExchangeType.Donation)
         {
-            model.Price = 0;
+            return ServiceResult<int>.Fail("Donation listings are no longer supported. Please list your book for Sale or Exchange.");
         }
         else if (model.ExchangeType == ExchangeType.Exchange)
         {
@@ -174,6 +180,35 @@ public class BookFacade : IBookFacade
 
         await _bookRepository.AddAsync(book);
         _logger.LogInformation("Student {OwnerId} published book {BookId} ({Title})", ownerId, book.BookId, book.Title);
+
+        // Check for matching active wanted books and notify owners
+        try
+        {
+            var matches = await _wantedBookRepository.FindMatchesForListingAsync(
+                book.Title, book.Author, book.Isbn, book.CategoryId, book.Price, book.ExchangeType);
+
+            foreach (var match in matches)
+            {
+                if (match.UserId != ownerId)
+                {
+                    await _notificationRepository.AddAsync(new Notification
+                    {
+                        UserId = match.UserId,
+                        Title = "Wanted Book Match Found! 📚",
+                        Message = $"A student just listed \"{book.Title}\", which matches your active wanted book post!",
+                        Type = NotificationType.WantedBookMatch,
+                        RelatedEntityType = "Book",
+                        RelatedEntityId = book.BookId,
+                        NavigationUrl = $"/books/details/{book.BookId}",
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to notify matching wanted books for Book {BookId}", book.BookId);
+        }
 
         return ServiceResult<int>.Ok(book.BookId);
     }
@@ -232,7 +267,7 @@ public class BookFacade : IBookFacade
         // Pricing rules
         if (model.ExchangeType == ExchangeType.Donation)
         {
-            model.Price = 0;
+            return ServiceResult.Fail("Donation listings are no longer supported. Please list your book for Sale or Exchange.");
         }
         else if (model.ExchangeType == ExchangeType.Exchange)
         {

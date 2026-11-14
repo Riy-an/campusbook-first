@@ -1,0 +1,109 @@
+@model WantedBookCreateViewModel
+@{
+    ViewData["Title"] = "Post a Wanted Book";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-lg-8">
+        <div class="card card-campus shadow-sm border-0">
+            <div class="card-header bg-white p-4 border-bottom">
+                <h1 class="h4 fw-bold mb-1">Post a Wanted Book 📢</h1>
+                <p class="text-muted small mb-0">Describe the academic book you need so fellow students who own it can reach out or list it.</p>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <label asp-for="Title" class="form-label fw-semibold small"></label>
+                            <input asp-for="Title" class="form-control" placeholder="e.g. Operating System Concepts (Silberschatz)" />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Author" class="form-label fw-semibold small"></label>
+                            <input asp-for="Author" class="form-control" placeholder="e.g. Abraham Silberschatz, Peter Baer Galvin" />
+                            <span asp-validation-for="Author" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Isbn" class="form-label fw-semibold small"></label>
+                            <input asp-for="Isbn" class="form-control" placeholder="e.g. 9781119800361" />
+                            <span asp-validation-for="Isbn" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="CategoryId" class="form-label fw-semibold small"></label>
+                            <select asp-for="CategoryId" class="form-select" asp-items="Model.Categories">
+                                <option value="">-- Select Subject Category --</option>
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DepartmentId" class="form-label fw-semibold small"></label>
+                            <select asp-for="DepartmentId" class="form-select" asp-items="Model.Departments">
+                                <option value="">-- Optional: Department --</option>
+                            </select>
+                            <span asp-validation-for="DepartmentId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="CourseCode" class="form-label fw-semibold small"></label>
+                            <input asp-for="CourseCode" class="form-control" placeholder="e.g. CSE-3301" />
+                            <span asp-validation-for="CourseCode" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="PreferredCondition" class="form-label fw-semibold small"></label>
+                            <select asp-for="PreferredCondition" class="form-select">
+                                <option value="">Any Condition</option>
+                                <option value="New">New / Like New</option>
+                                <option value="Good">Good (Readable)</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                            <span asp-validation-for="PreferredCondition" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="MaxBudget" class="form-label fw-semibold small"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">৳</span>
+                                <input asp-for="MaxBudget" type="number" step="1" min="0" class="form-control" placeholder="e.g. 350" />
+                            </div>
+                            <span asp-validation-for="MaxBudget" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label asp-for="PreferredExchangeType" class="form-label fw-semibold small"></label>
+                            <select asp-for="PreferredExchangeType" class="form-select">
+                                <option value="">Either Sale or Exchange</option>
+                                <option value="Sale">Looking to Purchase (Sale)</option>
+                                <option value="Exchange">Looking to Trade (Exchange for another book)</option>
+                            </select>
+                            <span asp-validation-for="PreferredExchangeType" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label asp-for="Description" class="form-label fw-semibold small"></label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Specify if you need a particular edition, international version, or specific study term..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-campus px-4 py-2 shadow-sm">Publish Wanted Post</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

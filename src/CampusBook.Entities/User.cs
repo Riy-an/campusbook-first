@@ -23,5 +23,9 @@ public class User
     public virtual StudentProfile? StudentProfile { get; set; }
     public virtual ICollection<Book> Books { get; set; } = new List<Book>();
     public virtual ICollection<BookRequest> SentRequests { get; set; } = new List<BookRequest>();
+    public virtual ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
+    public virtual ICollection<WantedBook> WantedBooks { get; set; } = new List<WantedBook>();
+    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public virtual ICollection<Message> SentMessages { get; set; } = new List<Message>();
 }
 
