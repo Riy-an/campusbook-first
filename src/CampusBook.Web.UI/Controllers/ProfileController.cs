@@ -2,6 +2,7 @@ using System.Security.Claims;
 using CampusBook.Facade.Interface;
 using CampusBook.Facade.ViewModels.Profile;
 using CampusBook.Framework;
+using CampusBook.Web.UI.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,6 +28,7 @@ public class ProfileController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.Profile.MyProfile)]
+    [HasPermission(Permissions.Profile.ViewOwn)]
     public async Task<IActionResult> Index()
     {
         var userId = GetCurrentUserId();
@@ -41,6 +43,7 @@ public class ProfileController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.Profile.EditProfile)]
+    [HasPermission(Permissions.Profile.EditOwn)]
     public async Task<IActionResult> Edit()
     {
         var userId = GetCurrentUserId();
@@ -56,6 +59,7 @@ public class ProfileController : Controller
     [HttpPost]
     [Route(UrlRewrite.Profile.EditProfile)]
     [ValidateAntiForgeryToken]
+    [HasPermission(Permissions.Profile.EditOwn)]
     public async Task<IActionResult> Edit(ProfileEditViewModel model)
     {
         var userId = GetCurrentUserId();

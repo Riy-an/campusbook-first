@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CampusBook.Facade.Interface;
 using CampusBook.Framework;
+using CampusBook.Web.UI.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,6 +25,7 @@ public class NotificationsController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.Notifications.Index)]
+    [HasPermission(Permissions.Notifications.ViewOwn)]
     public async Task<IActionResult> Index(int page = 1)
     {
         var userId = GetCurrentUserId();
@@ -33,6 +35,7 @@ public class NotificationsController : Controller
 
     [HttpPost]
     [Route(UrlRewrite.Notifications.MarkAsRead)]
+    [HasPermission(Permissions.Notifications.ManageOwn)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAsRead(int id, string? returnUrl = null)
     {
@@ -49,6 +52,7 @@ public class NotificationsController : Controller
 
     [HttpPost]
     [Route(UrlRewrite.Notifications.MarkAllAsRead)]
+    [HasPermission(Permissions.Notifications.ManageOwn)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAllAsRead()
     {
@@ -60,6 +64,7 @@ public class NotificationsController : Controller
 
     [HttpGet]
     [Route("notifications/unread-count")]
+    [HasPermission(Permissions.Notifications.ViewOwn)]
     public async Task<IActionResult> GetUnreadCount()
     {
         var userId = GetCurrentUserId();

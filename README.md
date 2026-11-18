@@ -4,6 +4,7 @@
 > **Architecture Pattern:** N-Tier Layered Architecture with Facade Pattern  
 > **Database Platform:** Microsoft SQL Server 2025 Express (`Server=.\\SQLEXPRESS;Database=CampusBookDb`)  
 > **Authentication:** ASP.NET Core Secure Cookie Authentication with PBKDF2 Password Hashing  
+> **Authorization:** Database-Driven Fine-Grained Permission System with ASP.NET Core Dynamic Policies  
 > **Currency Format:** Bangladeshi Taka (`৳`)
 
 ---
@@ -61,6 +62,10 @@
    - Dedicated exchange history view with summary metrics: Total Sold, Total Purchased, Total Exchanged.
    - Filters by transaction role: Sold, Purchased, Exchanged.
    - Preserves complete snapshot of offered trade books and timestamps.
+9. **Database-Driven Fine-Grained Authorization:**
+   - Database tables for individual permissions, permission groups, mappings, and per-user assignments with direct overrides.
+   - ASP.NET Core dynamic policy provider and server-side authorization handlers.
+   - 2-minute sliding memory cache with instant cache invalidation upon privilege alteration.
 
 ---
 
@@ -82,21 +87,27 @@ CampusBook.sln
 │   │   ├── Message.cs                # Sanitized conversation message entity (Phase-2)
 │   │   ├── BookCategory.cs           # Subject category lookup entity
 │   │   ├── Department.cs             # Academic department lookup entity
-│   │   ├── Role.cs                   # Authorization roles (Student, Admin)
+│   │   ├── Role.cs                   # Baseline authorization roles (Student, Admin)
+│   │   ├── Permission.cs             # Granular named permission entity
+│   │   ├── PermissionGroup.cs        # Role/group grouping entity (Student, Admin, Moderator)
+│   │   ├── PermissionGroupMap.cs     # Group-to-permission mapping entity (Composite PK)
+│   │   ├── UserPermission.cs         # User group assignments & direct permission overrides
 │   │   ├── StudentProfile.cs         # 1:1 user profile extension entity
 │   │   ├── User.cs                   # Student identity & credentials entity
 │   │   └── Enums...                  # BookCondition, ExchangeType, BookStatus, RequestStatus, WantedBookStatus, NotificationType
 │   │
 │   ├── CampusBook.Framework/         # Common cross-cutting layer
 │   │   ├── UrlRewrite.cs             # Centralized compile-time route string constants
+│   │   ├── Permissions.cs            # Compile-time permission and group constants
 │   │   └── Extensions.cs             # Date, price (৳), and string formatting extensions
 │   │
 │   ├── CampusBook.DataAccess/        # Persistence layer (EF Core 10.0)
-│   │   ├── ApplicationDbContext.cs   # DbContext with Fluent API & SQL Server cascade rules
+│   │   ├── ApplicationDbContext.cs   # DbContext with Fluent API, seed data & cascade rules
 │   │   ├── DesignTimeDbContextFactory.cs # EF CLI migration factory
 │   │   ├── Interface/                # Repository contracts
 │   │   │   ├── IRepository.cs        # Generic base repository contract
 │   │   │   ├── IUserRepository.cs
+│   │   │   ├── IPermissionRepository.cs # Database permission resolution contract
 │   │   │   ├── IStudentProfileRepository.cs
 │   │   │   ├── IBookRepository.cs
 │   │   │   ├── IBookRequestRepository.cs
@@ -108,6 +119,7 @@ CampusBook.sln
 │   │   ├── Implementation/           # Concrete repository classes
 │   │   │   ├── Repository.cs
 │   │   │   ├── UserRepository.cs
+│   │   │   ├── PermissionRepository.cs   # Effective permission evaluator with override logic
 │   │   │   ├── StudentProfileRepository.cs
 │   │   │   ├── BookRepository.cs     # Database-level filtering, search, and pagination
 │   │   │   ├── BookRequestRepository.cs
@@ -120,10 +132,11 @@ CampusBook.sln
 │   │       ├── 20261107100229_Shahed.cs
 │   │       ├── 20261107160203_Campusbook.cs
 │   │       ├── 20261113193632_Phase2Features.cs
-│   │       └── 20261114111904_AddIdCardChangeLimitToStudentProfile.cs
+│   │       ├── 20261114111904_AddIdCardChangeLimitToStudentProfile.cs
+│   │       └── 20261118041126_campusbook1.cs             # Consolidated full schema & fine-grained permissions
 │   │
 │   ├── CampusBook.Facade/            # Application business logic & orchestration
-│   │   ├── DependencyInjection.cs    # AddCampusBookFacade extension method
+│   │   ├── DependencyInjection.cs    # AddCampusBookFacade extension method & memory cache
 │   │   ├── Common/ServiceResult.cs   # Standardized operation result type
 │   │   ├── Services/                 # Infrastructure services
 │   │   │   ├── IEmailSender.cs
@@ -143,6 +156,7 @@ CampusBook.sln
 │   │   │   └── Dashboard/            # Real-time metrics dashboard model
 │   │   ├── Interface/                # Facade contracts
 │   │   │   ├── IUserFacade.cs
+│   │   │   ├── IPermissionService.cs # Cached permission & assignment management contract
 │   │   │   ├── IStudentProfileFacade.cs
 │   │   │   ├── IBookFacade.cs
 │   │   │   ├── IBookRequestFacade.cs
@@ -154,6 +168,7 @@ CampusBook.sln
 │   │   │   └── IExchangeHistoryFacade.cs
 │   │   └── Implementation/           # Concrete facade implementations
 │   │       ├── UserFacade.cs
+│   │       ├── PermissionService.cs  # Sliding cache + instant invalidation
 │   │       ├── StudentProfileFacade.cs
 │   │       ├── BookFacade.cs
 │   │       ├── BookRequestFacade.cs
@@ -165,7 +180,12 @@ CampusBook.sln
 │   │       └── ExchangeHistoryFacade.cs
 │   │
 │   └── CampusBook.Web.UI/            # Presentation layer (ASP.NET Core MVC)
-│       ├── Controllers/              # Thin MVC controllers
+│       ├── Authorization/            # ASP.NET Core dynamic authorization components
+│       │   ├── PermissionRequirement.cs          # Authorization requirement
+│       │   ├── PermissionAuthorizationHandler.cs # Fail-closed policy evaluation handler
+│       │   ├── PermissionPolicyProvider.cs       # Dynamic "Permission:*" policy provider
+│       │   └── HasPermissionAttribute.cs         # Declarative controller/action attribute
+│       ├── Controllers/              # Thin MVC controllers decorated with [HasPermission(...)]
 │       │   ├── AccountController.cs
 │       │   ├── ProfileController.cs
 │       │   ├── BooksController.cs
@@ -179,7 +199,7 @@ CampusBook.sln
 │       │   └── HomeController.cs
 │       ├── Views/                    # Razor Views with Bootstrap 5.3 & TagHelpers
 │       ├── wwwroot/                  # Static CSS, JS, Bootstrap, and upload folders
-│       └── Program.cs                # Startup pipeline & cookie authentication
+│       └── Program.cs                # Startup pipeline, DI registration & security policies
 │
 └── tests/
     └── CampusBook.Tests/             # Automated test suite (xUnit, InMemory EF Core, Moq)
@@ -193,12 +213,152 @@ CampusBook.sln
         ├── WantedBookTests.cs        # Create, edit, close, matching listing notifications
         ├── NotificationTests.cs      # Creation, unread count, individual mark-read, mark-all-read
         ├── MessagingTests.cs         # Authorized chat, unauthorized rejection, XSS sanitization, read-only on complete
-        └── ExchangeHistoryTests.cs   # Completed ledger queries, sold/purchased/exchanged categorization, offer snapshots
+        ├── ExchangeHistoryTests.cs   # Completed ledger queries, sold/purchased/exchanged categorization, offer snapshots
+        └── PermissionAuthorizationTests.cs # Seed integrity, group permissions, direct overrides, fail-close, caching
 ```
 
 ---
 
-## 3. Database Setup & Migrations
+## 3. Database-Driven Fine-Grained Authorization System
+
+CampusBook incorporates a robust, enterprise-grade, database-driven authorization system that decouples fine-grained permissions from simple static roles.
+
+### Schema Design & Entity Relationships
+
+The schema consists of 4 specialized authorization tables configured via Fluent API with strict referential integrity, cascading rules, and unique compound indexes:
+
+```
++------------------+         +-----------------------+         +---------------------+
+|   Permissions    |         |  PermissionGroupMaps  |         |  PermissionGroups   |
++------------------+         +-----------------------+         +---------------------+
+| PermissionId (PK)|<-------+| PermissionGroupId(PK) |+------->| PermissionGroupId(PK|
+| Name (Unique)    |         | PermissionId (PK)     |         | GroupName (Unique)  |
+| Module           |         +-----------------------+         | Description         |
+| Description      |                                           | IsSystem            |
+| CreatedAt        |                                           | CreatedAt           |
++------------------+                                           +---------------------+
+        ^                                                                 ^
+        |                       +-------------------+                     |
+        |                       |  UserPermissions  |                     |
+        +-----------------------| UserPermissionId  |---------------------+
+                                | UserId (FK)       |
+                                | PermissionGroupId | (Nullable FK)
+                                | PermissionId      | (Nullable FK)
+                                | IsGranted (bool)  |
+                                | CreatedAt         |
+                                +-------------------+
+                                          |
+                                          v
+                                +-------------------+
+                                |       Users       |
+                                +-------------------+
+```
+
+1. **`Permissions`**: Individual discrete actions named hierarchically (`Module.Action`).
+2. **`PermissionGroups`**: Logical groupings of permissions (`Student`, `Admin`, `Moderator`).
+3. **`PermissionGroupMaps`**: Many-to-many junction between `PermissionGroups` and `Permissions` with a composite primary key `(PermissionGroupId, PermissionId)`.
+4. **`UserPermissions`**: User assignment table supporting both:
+   - **Group Assignments**: `PermissionGroupId` specified, granting all group permissions.
+   - **Direct Overrides**: `PermissionId` specified with `IsGranted = true` (direct grant) or `IsGranted = false` (direct deny/revocation).
+
+### Seeded System Groups
+
+The database migration seeds three default groups:
+- **`Student` (Id: 1, System: true):** Standard student accounts for book exchange, requests, wishlist, wanted posts, messaging, and profile management.
+- **`Moderator` (Id: 3, System: true):** Elevated student/staff accounts with cross-user content moderation authority (`Books.EditAny`, `Books.DeleteAny`, `WantedBooks.ManageAny`).
+- **`Admin` (Id: 2, System: true):** System administrators with unrestricted platform permissions including user management and authorization configuration.
+
+### Permission Catalog (29 Granular Permissions)
+
+| Module | Permission Name | Description | Student | Moderator | Admin |
+|:---|:---|:---|:---:|:---:|:---:|
+| **Books** | `Books.View` | Browse catalogue, view public listings, and view own books | ✅ | ✅ | ✅ |
+| | `Books.Create` | Create and publish new book listings | ✅ | ✅ | ✅ |
+| | `Books.EditOwn` | Edit own published book listings | ✅ | ✅ | ✅ |
+| | `Books.DeleteOwn` | Deactivate/delete own published book listings | ✅ | ✅ | ✅ |
+| | `Books.EditAny` | Edit any book listing across the platform (Moderation) | ❌ | ✅ | ✅ |
+| | `Books.DeleteAny` | Deactivate or remove any book listing (Moderation) | ❌ | ✅ | ✅ |
+| **Requests** | `Requests.ViewOwn` | View sent and received exchange requests | ✅ | ✅ | ✅ |
+| | `Requests.Create` | Send a new book exchange or purchase request | ✅ | ✅ | ✅ |
+| | `Requests.ManageOwn` | Accept, reject, cancel, or confirm handover for own requests | ✅ | ✅ | ✅ |
+| | `Requests.ManageAny` | Administratively resolve or cancel any request | ❌ | ❌ | ✅ |
+| **Wishlist** | `Wishlist.ViewOwn` | View personal saved book wishlist | ✅ | ✅ | ✅ |
+| | `Wishlist.ManageOwn` | Add and remove books from personal wishlist | ✅ | ✅ | ✅ |
+| **WantedBooks** | `WantedBooks.View` | Browse wanted-book postings and view own posts | ✅ | ✅ | ✅ |
+| | `WantedBooks.Create` | Post a request for a book not yet listed | ✅ | ✅ | ✅ |
+| | `WantedBooks.EditOwn` | Edit own wanted-book request postings | ✅ | ✅ | ✅ |
+| | `WantedBooks.DeleteOwn` | Close or remove own wanted-book postings | ✅ | ✅ | ✅ |
+| | `WantedBooks.ManageAny` | Moderate, edit, or close any wanted-book posting | ❌ | ✅ | ✅ |
+| **Messaging** | `Messaging.ViewOwn` | View personal conversation threads and chat history | ✅ | ✅ | ✅ |
+| | `Messaging.Send` | Send direct messages in active exchange conversations | ✅ | ✅ | ✅ |
+| **Notifications** | `Notifications.ViewOwn` | View personal notification stream and unread count | ✅ | ✅ | ✅ |
+| | `Notifications.ManageOwn` | Mark notifications as read or clear notification center | ✅ | ✅ | ✅ |
+| **History** | `History.ViewOwn` | View personal exchange transaction history ledger | ✅ | ✅ | ✅ |
+| **Profile** | `Profile.ViewOwn` | View own complete student profile and dashboard | ✅ | ✅ | ✅ |
+| | `Profile.EditOwn` | Edit permitted personal profile details and ID card | ✅ | ✅ | ✅ |
+| | `Profile.ViewPublic` | View public sanitized student profile | ✅ | ✅ | ✅ |
+| **Admin** | `Admin.Users.View` | View all registered student accounts and profiles | ❌ | ❌ | ✅ |
+| | `Admin.Users.Manage` | Activate, deactivate, or edit user accounts | ❌ | ❌ | ✅ |
+| | `Admin.Permissions.View` | View authorization groups and permission matrices | ❌ | ❌ | ✅ |
+| | `Admin.Permissions.Manage`| Assign groups, grant direct permissions, or revoke rights | ❌ | ❌ | ✅ |
+
+### Evaluation Pipeline & Security Precedence
+
+Effective permissions are resolved by `IPermissionRepository.GetUserEffectivePermissionsAsync` using a strict fail-closed pipeline:
+
+```
+[Incoming Request]
+       │
+       ▼
+[1. User Active Check] ──(IsActive == false or not found)──> [Return Empty / Deny Access]
+       │ (Active)
+       ▼
+[2. Collect Group IDs] (Explicit UserPermission.PermissionGroupId + Baseline User.RoleId)
+       │
+       ▼
+[3. Gather Group Permissions] (Query PermissionGroupMaps for all collected Group IDs)
+       │
+       ▼
+[4. Direct User Overrides]
+       ├─ If UserPermission has PermissionId with IsGranted == true  ──> Add Permission
+       └─ If UserPermission has PermissionId with IsGranted == false ──> Strip Permission (Explicit Deny)
+       │
+       ▼
+[Effective Permissions Set] ──> Cached in Memory (2 min sliding)
+```
+
+1. **Active Check:** If a user account is inactive (`IsActive = false`), the system immediately fails closed and returns an empty set.
+2. **Backward Compatibility:** In addition to explicit `UserPermission` rows, the evaluation automatically includes `user.RoleId`. Existing users with `RoleId = 1` retain their Student permissions immediately upon migration without requiring manual data fixes.
+3. **Explicit Deny Precedence:** If a direct `UserPermission` row exists with `IsGranted = false` for a permission, it overrides and strips that permission, even if granted by multiple assigned groups.
+4. **Independent Ownership Enforcement:** Action permissions (e.g., `Books.EditOwn`, `Requests.ManageOwn`) are evaluated server-side by attributes, but resource ownership is checked independently in the Facade layer. A student with `Books.EditOwn` can never edit another student's listing.
+
+### Performance Caching & Instant Invalidation
+
+To eliminate database roundtrips on every HTTP request:
+- Permissions are cached using ASP.NET Core `IMemoryCache` with a **2-minute sliding expiration** and **5-minute absolute expiration**.
+- When an administrator modifies group assignments (`AssignGroupToUserAsync`, `RemoveGroupFromUserAsync`) or direct permissions (`GrantDirectPermissionAsync`, `RevokeDirectPermissionAsync`), the service immediately invokes `InvalidateUserPermissionsCache(userId)`.
+- The user's updated authorization state takes effect on the very next HTTP request without waiting for cookie expiration.
+
+### Server-Side Policy Enforcement
+
+Protected controller actions are annotated using `[HasPermission(...)]`:
+
+```csharp
+[HttpPost]
+[Route(UrlRewrite.Books.Create)]
+[HasPermission(Permissions.Books.Create)]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Create(BookCreateViewModel model)
+{
+    // ...
+}
+```
+
+The dynamic `PermissionPolicyProvider` translates any `HasPermission("Module.Action")` attribute into a `PermissionRequirement`. The `PermissionAuthorizationHandler` queries the cached `IPermissionService`. If the requirement is not met, the handler fails closed, resulting in an immediate HTTP `403 Forbidden` (or redirect to Login for unauthenticated requests).
+
+---
+
+## 4. Database Setup & Migrations
 
 The database connection string is configured in `src/CampusBook.Web.UI/appsettings.json`:
 
@@ -210,17 +370,20 @@ The database connection string is configured in `src/CampusBook.Web.UI/appsettin
 
 ### Applying Migrations
 
-The Phase-2 schema changes are captured in migration `20261113193632_Phase2Features.cs`. To apply all migrations to your local SQL Server:
+The complete database schema—including Phase-1, Phase-2 features, ID card change limits, and the Fine-Grained Authorization system—is managed via EF Core migrations:
 
 ```powershell
 dotnet ef database update --project src/CampusBook.DataAccess --startup-project src/CampusBook.Web.UI
 ```
 
+**Key Migrations:**
+- `20261118041126_campusbook1.cs` — Complete consolidated database schema including Phase-1, Phase-2 features (Wishlist, WantedBooks, Notifications, Messages, ExchangeOffers, ID card limit) and fine-grained permissions (`Permissions`, `PermissionGroups`, `PermissionGroupMaps`, `UserPermissions`).
+
 ---
 
-## 4. Automated Test Suite
+## 5. Automated Test Suite
 
-The solution contains a comprehensive automated test suite in `tests/CampusBook.Tests/` using xUnit, Entity Framework Core InMemory provider, and Moq.
+The solution contains an automated test suite in `tests/CampusBook.Tests/` using xUnit, Entity Framework Core InMemory provider, and Moq.
 
 ### Test Execution
 
@@ -230,11 +393,11 @@ Run the complete test suite from the repository root:
 dotnet test CampusBook.sln
 ```
 
-### Test Suite Summary (66 Tests — 100% Passing)
+### Test Suite Summary (104 Tests — 100% Passing)
 
 | Test Suite | Total Tests | Focus Areas |
 |:---|:---:|:---|
-| `AuthenticationTests.cs` | 7 | Personal email registration, university email mapping, mandatory ID card upload, immediate login (no verification gating), duplicate email/student ID prevention, Taka currency formatting |
+| `AuthenticationTests.cs` | 7 | Personal email registration, university email mapping, mandatory ID card upload, immediate login, duplicate prevention, Taka currency formatting |
 | `ProfileTests.cs` | 6 | Full profile retrieval, protection of sensitive fields during edit, privacy-preserving public profile, ID card photo update, 3-times max change limit enforcement, counter non-increment on other edits |
 | `BookListingTests.cs` | 5 | Rejection of Donation type, price auto-zeroing for Exchange, non-negative price enforcement for Sale, unauthorized edit prevention, reserved book update locking |
 | `BookCatalogueTests.cs` | 4 | Available book filtering, exclusion of historical Donation records, ISBN exact matching, price sorting |
@@ -245,11 +408,12 @@ dotnet test CampusBook.sln
 | `NotificationTests.cs` | 3 | Creation, live unread counter, single mark-as-read with user isolation, mark-all-read |
 | `MessagingTests.cs` | 5 | Authorized chat between owner and requester, non-participant rejection, whitespace rejection, HTML/XSS sanitization, read-only mode upon exchange completion |
 | `ExchangeHistoryTests.cs` | 2 | Completed transactions ledger, role breakdown (Sold, Purchased, Exchanged), preservation of offered book details |
-| **Total** | **66** | **100% Pass Rate (0 Failures, 0 Skipped)** |
+| `PermissionAuthorizationTests.cs` | 38 | Seed integrity, default group permissions, admin full access, moderator elevation, legacy role inheritance, inactive fail-closed, direct grants/denials, sliding memory cache with instant invalidation, auto-group assignment during registration, ASP.NET Core authorization handler evaluation, and controller action attribute verification |
+| **Total** | **104** | **100% Pass Rate (0 Failures, 0 Skipped)** |
 
 ---
 
-## 5. Running the Application
+## 6. Running the Application
 
 To run the web application locally:
 
@@ -265,3 +429,4 @@ Open your browser and navigate to:
 If seeded or registered:
 - **Registration:** Any valid email address (e.g. `student@gmail.com`), University Email (`student@university.edu`), Student ID (e.g. `2026-CSE-001`), password (e.g. `Password123!`), and any sample ID card image file (PNG/JPG).
 - **Immediate Login:** No email verification link required; sign in immediately using your personal email and password.
+- **Default Permissions:** Every registered student account is immediately assigned the `Student` permission group, granting full textbook exchange, wishlist, wanted post, messaging, and profile capabilities.

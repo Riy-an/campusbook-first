@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CampusBook.Facade.Interface;
 using CampusBook.Framework;
+using CampusBook.Web.UI.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,6 +25,7 @@ public class MessagesController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.Messages.Index)]
+    [HasPermission(Permissions.Messaging.ViewOwn)]
     public async Task<IActionResult> Index()
     {
         var userId = GetCurrentUserId();
@@ -33,6 +35,7 @@ public class MessagesController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.Messages.Conversation)]
+    [HasPermission(Permissions.Messaging.ViewOwn)]
     public async Task<IActionResult> Conversation(int id)
     {
         var userId = GetCurrentUserId();
@@ -48,6 +51,7 @@ public class MessagesController : Controller
 
     [HttpPost]
     [Route(UrlRewrite.Messages.Send)]
+    [HasPermission(Permissions.Messaging.Send)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Send(int conversationId, string messageContent)
     {

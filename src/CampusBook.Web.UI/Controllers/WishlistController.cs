@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CampusBook.Facade.Interface;
 using CampusBook.Framework;
+using CampusBook.Web.UI.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,6 +29,7 @@ public class WishlistController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.Wishlist.Index)]
+    [HasPermission(Permissions.Wishlist.ViewOwn)]
     public async Task<IActionResult> Index()
     {
         var userId = GetCurrentUserId();
@@ -37,6 +39,7 @@ public class WishlistController : Controller
 
     [HttpPost]
     [Route(UrlRewrite.Wishlist.Toggle)]
+    [HasPermission(Permissions.Wishlist.ManageOwn)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Toggle(int bookId, string? returnUrl = null)
     {
@@ -64,6 +67,7 @@ public class WishlistController : Controller
 
     [HttpPost]
     [Route(UrlRewrite.Wishlist.Remove)]
+    [HasPermission(Permissions.Wishlist.ManageOwn)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Remove(int bookId)
     {

@@ -99,6 +99,14 @@ public class UserFacade : IUserFacade
 
         user.PasswordHash = _passwordHasher.HashPassword(user, model.Password);
 
+        // Assign default Student permission group
+        user.UserPermissions.Add(new UserPermission
+        {
+            PermissionGroupId = 1,
+            IsGranted = true,
+            CreatedAt = DateTime.UtcNow
+        });
+
         await _userRepository.AddAsync(user);
         _logger.LogInformation("Registered new student {Email} with ID {StudentId}", user.Email, user.StudentId);
 

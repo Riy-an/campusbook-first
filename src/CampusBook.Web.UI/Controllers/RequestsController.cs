@@ -2,6 +2,7 @@ using System.Security.Claims;
 using CampusBook.Facade.Interface;
 using CampusBook.Facade.ViewModels.Requests;
 using CampusBook.Framework;
+using CampusBook.Web.UI.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -32,6 +33,7 @@ public class RequestsController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.Requests.Sent)]
+    [HasPermission(Permissions.Requests.ViewOwn)]
     public async Task<IActionResult> Sent()
     {
         var userId = GetCurrentUserId();
@@ -41,6 +43,7 @@ public class RequestsController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.Requests.Received)]
+    [HasPermission(Permissions.Requests.ViewOwn)]
     public async Task<IActionResult> Received()
     {
         var userId = GetCurrentUserId();
@@ -50,6 +53,7 @@ public class RequestsController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.Requests.Create)]
+    [HasPermission(Permissions.Requests.Create)]
     public async Task<IActionResult> Create(int bookId)
     {
         var userId = GetCurrentUserId();
@@ -66,6 +70,7 @@ public class RequestsController : Controller
 
     [HttpPost]
     [Route(UrlRewrite.Requests.Create)]
+    [HasPermission(Permissions.Requests.Create)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateRequestViewModel model)
     {
@@ -114,6 +119,7 @@ public class RequestsController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.Requests.Details)]
+    [HasPermission(Permissions.Requests.ViewOwn)]
     public async Task<IActionResult> Details(int id)
     {
         var userId = GetCurrentUserId();
@@ -128,6 +134,7 @@ public class RequestsController : Controller
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Requests.ManageOwn)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Accept(int id)
     {
@@ -147,6 +154,7 @@ public class RequestsController : Controller
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Requests.ManageOwn)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(int id)
     {
@@ -166,6 +174,7 @@ public class RequestsController : Controller
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Requests.ManageOwn)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancel(int id)
     {
@@ -185,6 +194,7 @@ public class RequestsController : Controller
     }
 
     [HttpPost]
+    [HasPermission(Permissions.Requests.ManageOwn)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmHandover(int id)
     {

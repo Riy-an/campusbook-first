@@ -23,6 +23,17 @@ public class ApplicationDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<PermissionGroup> PermissionGroups => Set<PermissionGroup>();
+    public DbSet<PermissionGroupMap> PermissionGroupMaps => Set<PermissionGroupMap>();
+    public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ConfigureWarnings(warnings =>
+            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -304,6 +315,74 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // Permission configuration
+        modelBuilder.Entity<Permission>(entity =>
+        {
+            entity.ToTable("Permissions");
+            entity.HasKey(p => p.PermissionId);
+            entity.Property(p => p.Name).IsRequired().HasMaxLength(100);
+            entity.Property(p => p.Module).IsRequired().HasMaxLength(50);
+            entity.Property(p => p.Description).IsRequired().HasMaxLength(250);
+            entity.HasIndex(p => p.Name).IsUnique();
+        });
+
+        // PermissionGroup configuration
+        modelBuilder.Entity<PermissionGroup>(entity =>
+        {
+            entity.ToTable("PermissionGroups");
+            entity.HasKey(pg => pg.PermissionGroupId);
+            entity.Property(pg => pg.GroupName).IsRequired().HasMaxLength(50);
+            entity.Property(pg => pg.Description).HasMaxLength(250);
+            entity.HasIndex(pg => pg.GroupName).IsUnique();
+        });
+
+        // PermissionGroupMap configuration
+        modelBuilder.Entity<PermissionGroupMap>(entity =>
+        {
+            entity.ToTable("PermissionGroupMaps");
+            entity.HasKey(pgm => new { pgm.PermissionGroupId, pgm.PermissionId });
+
+            entity.HasOne(pgm => pgm.PermissionGroup)
+                .WithMany(pg => pg.GroupMaps)
+                .HasForeignKey(pgm => pgm.PermissionGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(pgm => pgm.Permission)
+                .WithMany(p => p.GroupMaps)
+                .HasForeignKey(pgm => pgm.PermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // UserPermission configuration
+        modelBuilder.Entity<UserPermission>(entity =>
+        {
+            entity.ToTable("UserPermissions");
+            entity.HasKey(up => up.UserPermissionId);
+
+            entity.HasOne(up => up.User)
+                .WithMany(u => u.UserPermissions)
+                .HasForeignKey(up => up.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(up => up.PermissionGroup)
+                .WithMany(pg => pg.UserPermissions)
+                .HasForeignKey(up => up.PermissionGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(up => up.Permission)
+                .WithMany(p => p.UserPermissions)
+                .HasForeignKey(up => up.PermissionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(up => new { up.UserId, up.PermissionGroupId })
+                .HasFilter("[PermissionGroupId] IS NOT NULL")
+                .IsUnique();
+
+            entity.HasIndex(up => new { up.UserId, up.PermissionId })
+                .HasFilter("[PermissionId] IS NOT NULL")
+                .IsUnique();
+        });
+
         // Seed initial lookup data
         SeedLookupData(modelBuilder);
     }
@@ -333,6 +412,74 @@ public class ApplicationDbContext : DbContext
             new BookCategory { CategoryId = 6, Name = "Humanities & Social Sciences", Description = "History, Philosophy, Sociology, Psychology" },
             new BookCategory { CategoryId = 7, Name = "Literature & Languages", Description = "English, Fiction, Writing, Grammar, Foreign Languages" }
         );
+
+        var seedTimestamp = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+
+        // Seed Permission Groups
+        modelBuilder.Entity<PermissionGroup>().HasData(
+            new PermissionGroup { PermissionGroupId = 1, GroupName = "Student", Description = "Standard student role with access to exchange, browsing, requests, wishlist, wanted posts, messaging, and profile management.", IsSystem = true, CreatedAt = seedTimestamp },
+            new PermissionGroup { PermissionGroupId = 2, GroupName = "Admin", Description = "Full system administration with unrestricted access to all operations, user management, and permissions.", IsSystem = true, CreatedAt = seedTimestamp },
+            new PermissionGroup { PermissionGroupId = 3, GroupName = "Moderator", Description = "Student moderator with elevated content moderation and user overview permissions.", IsSystem = false, CreatedAt = seedTimestamp }
+        );
+
+        // Seed Permissions
+        var permissions = new[]
+        {
+            new Permission { PermissionId = 1, Name = "Books.View", Module = "Books", Description = "Browse and view available book listings", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 2, Name = "Books.Create", Module = "Books", Description = "Publish new book listings for sale or exchange", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 3, Name = "Books.EditOwn", Module = "Books", Description = "Edit own published book listings", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 4, Name = "Books.DeleteOwn", Module = "Books", Description = "Deactivate or remove own book listings", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 5, Name = "Books.EditAny", Module = "Books", Description = "Edit any book listing across the system (Moderator/Admin)", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 6, Name = "Books.DeleteAny", Module = "Books", Description = "Deactivate any book listing (Moderator/Admin)", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 7, Name = "Requests.ViewOwn", Module = "Requests", Description = "View sent and received book requests", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 8, Name = "Requests.Create", Module = "Requests", Description = "Submit request for a book listing", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 9, Name = "Requests.ManageOwn", Module = "Requests", Description = "Accept, reject, or cancel own requests and confirm handover", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 10, Name = "Requests.ManageAny", Module = "Requests", Description = "Arbitrate or manage any request in the system", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 11, Name = "Wishlist.ViewOwn", Module = "Wishlist", Description = "View personal book wishlist", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 12, Name = "Wishlist.ManageOwn", Module = "Wishlist", Description = "Add or remove books from personal wishlist", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 13, Name = "WantedBooks.View", Module = "WantedBooks", Description = "Browse and view student wanted-book posts", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 14, Name = "WantedBooks.Create", Module = "WantedBooks", Description = "Post a request for a needed book", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 15, Name = "WantedBooks.EditOwn", Module = "WantedBooks", Description = "Edit own wanted-book posts", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 16, Name = "WantedBooks.DeleteOwn", Module = "WantedBooks", Description = "Close or remove own wanted-book posts", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 17, Name = "WantedBooks.ManageAny", Module = "WantedBooks", Description = "Edit or close any wanted-book post in the system", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 18, Name = "Messaging.ViewOwn", Module = "Messaging", Description = "View conversation threads for accepted requests", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 19, Name = "Messaging.Send", Module = "Messaging", Description = "Send messages in accepted request conversations", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 20, Name = "Notifications.ViewOwn", Module = "Notifications", Description = "View personal in-app notifications", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 21, Name = "Notifications.ManageOwn", Module = "Notifications", Description = "Mark personal notifications as read or clear all", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 22, Name = "History.ViewOwn", Module = "History", Description = "View personal completed exchange and transaction history", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 23, Name = "Profile.ViewOwn", Module = "Profile", Description = "View own student profile details and ID card", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 24, Name = "Profile.EditOwn", Module = "Profile", Description = "Edit personal profile details and upload ID card photo", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 25, Name = "Profile.ViewPublic", Module = "Profile", Description = "View public peer student profile summaries", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 26, Name = "Admin.Users.View", Module = "Administration", Description = "View registered student users and verification status", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 27, Name = "Admin.Users.Manage", Module = "Administration", Description = "Activate, suspend, or update student accounts", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 28, Name = "Admin.Permissions.View", Module = "Administration", Description = "View permission groups, assignments, and roles", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 29, Name = "Admin.Permissions.Manage", Module = "Administration", Description = "Configure permissions, map groups, and assign user overrides", CreatedAt = seedTimestamp }
+        };
+        modelBuilder.Entity<Permission>().HasData(permissions);
+
+        // Seed Permission Group Maps
+        // 1. Student permissions: 1, 2, 3, 4, 7, 8, 9, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25
+        var studentPermIds = new[] { 1, 2, 3, 4, 7, 8, 9, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25 };
+        var groupMaps = new List<PermissionGroupMap>();
+        foreach (var pid in studentPermIds)
+        {
+            groupMaps.Add(new PermissionGroupMap { PermissionGroupId = 1, PermissionId = pid, CreatedAt = seedTimestamp });
+        }
+
+        // 2. Moderator permissions: All student permissions + 5, 6, 10, 17, 26
+        var modExtraIds = new[] { 5, 6, 10, 17, 26 };
+        foreach (var pid in studentPermIds.Concat(modExtraIds))
+        {
+            groupMaps.Add(new PermissionGroupMap { PermissionGroupId = 3, PermissionId = pid, CreatedAt = seedTimestamp });
+        }
+
+        // 3. Admin permissions: 1 through 29
+        for (int pid = 1; pid <= 29; pid++)
+        {
+            groupMaps.Add(new PermissionGroupMap { PermissionGroupId = 2, PermissionId = pid, CreatedAt = seedTimestamp });
+        }
+
+        modelBuilder.Entity<PermissionGroupMap>().HasData(groupMaps);
     }
 }
 

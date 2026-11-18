@@ -2,6 +2,7 @@ using System.Security.Claims;
 using CampusBook.Facade.Interface;
 using CampusBook.Facade.ViewModels.History;
 using CampusBook.Framework;
+using CampusBook.Web.UI.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,6 +26,7 @@ public class HistoryController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.History.Index)]
+    [HasPermission(Permissions.History.ViewOwn)]
     public async Task<IActionResult> Index(HistoryRoleFilter filter = HistoryRoleFilter.All)
     {
         var userId = GetCurrentUserId();

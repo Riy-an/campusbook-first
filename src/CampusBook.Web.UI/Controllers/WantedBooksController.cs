@@ -2,6 +2,7 @@ using System.Security.Claims;
 using CampusBook.Facade.Interface;
 using CampusBook.Facade.ViewModels.WantedBooks;
 using CampusBook.Framework;
+using CampusBook.Web.UI.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -38,6 +39,7 @@ public class WantedBooksController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.WantedBooks.MyPosts)]
+    [HasPermission(Permissions.WantedBooks.View)]
     public async Task<IActionResult> MyPosts()
     {
         var userId = GetCurrentUserId();
@@ -47,6 +49,7 @@ public class WantedBooksController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.WantedBooks.Create)]
+    [HasPermission(Permissions.WantedBooks.Create)]
     public async Task<IActionResult> Create()
     {
         var model = await _wantedBookFacade.GetCreateViewModelAsync();
@@ -55,6 +58,7 @@ public class WantedBooksController : Controller
 
     [HttpPost]
     [Route(UrlRewrite.WantedBooks.Create)]
+    [HasPermission(Permissions.WantedBooks.Create)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(WantedBookCreateViewModel model)
     {
@@ -84,6 +88,7 @@ public class WantedBooksController : Controller
 
     [HttpGet]
     [Route(UrlRewrite.WantedBooks.Edit)]
+    [HasPermission(Permissions.WantedBooks.EditOwn)]
     public async Task<IActionResult> Edit(int id)
     {
         var userId = GetCurrentUserId();
@@ -98,6 +103,7 @@ public class WantedBooksController : Controller
 
     [HttpPost]
     [Route(UrlRewrite.WantedBooks.Edit)]
+    [HasPermission(Permissions.WantedBooks.EditOwn)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(WantedBookEditViewModel model)
     {
@@ -133,6 +139,7 @@ public class WantedBooksController : Controller
 
     [HttpPost]
     [Route(UrlRewrite.WantedBooks.Close)]
+    [HasPermission(Permissions.WantedBooks.DeleteOwn)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Close(int id)
     {
