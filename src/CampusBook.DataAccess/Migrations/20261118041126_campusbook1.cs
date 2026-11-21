@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -20,7 +20,9 @@ namespace CampusBook.DataAccess.Migrations
                     CategoryId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true)
+                    Description = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -34,7 +36,8 @@ namespace CampusBook.DataAccess.Migrations
                     DepartmentId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Code = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                    Code = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -87,6 +90,29 @@ namespace CampusBook.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Courses",
+                columns: table => new
+                {
+                    CourseId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CourseCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    CourseName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    DepartmentId = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Courses", x => x.CourseId);
+                    table.ForeignKey(
+                        name: "FK_Courses_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
+                        principalColumn: "DepartmentId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PermissionGroupMaps",
                 columns: table => new
                 {
@@ -128,6 +154,9 @@ namespace CampusBook.DataAccess.Migrations
                     PasswordResetToken = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     PasswordResetTokenExpiry = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    SuspensionReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SuspendedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    SuspendedByAdminId = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -139,6 +168,32 @@ namespace CampusBook.DataAccess.Migrations
                         principalTable: "Roles",
                         principalColumn: "RoleId",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AuditLogs",
+                columns: table => new
+                {
+                    AuditLogId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AdminUserId = table.Column<int>(type: "int", nullable: true),
+                    Action = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    TargetEntityType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    TargetId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Details = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
+                    IpAddress = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    TimestampUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsSuccess = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditLogs", x => x.AuditLogId);
+                    table.ForeignKey(
+                        name: "FK_AuditLogs_Users_AdminUserId",
+                        column: x => x.AdminUserId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -161,6 +216,9 @@ namespace CampusBook.DataAccess.Migrations
                     ImageUrl = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
                     OwnerId = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
+                    ModerationReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ModeratedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModeratedByAdminId = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
@@ -216,6 +274,40 @@ namespace CampusBook.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Reports",
+                columns: table => new
+                {
+                    ReportId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ReporterId = table.Column<int>(type: "int", nullable: false),
+                    TargetType = table.Column<int>(type: "int", nullable: false),
+                    TargetId = table.Column<int>(type: "int", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    AssignedAdminId = table.Column<int>(type: "int", nullable: true),
+                    ResolutionNotes = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ResolvedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reports", x => x.ReportId);
+                    table.ForeignKey(
+                        name: "FK_Reports_Users_AssignedAdminId",
+                        column: x => x.AssignedAdminId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Reports_Users_ReporterId",
+                        column: x => x.ReporterId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "StudentProfiles",
                 columns: table => new
                 {
@@ -229,6 +321,10 @@ namespace CampusBook.DataAccess.Migrations
                     StudentIdCardUrl = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
                     IdCardChangeCount = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
                     Bio = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    VerificationStatus = table.Column<int>(type: "int", nullable: false),
+                    VerificationNotes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    VerifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    VerifiedByAdminId = table.Column<int>(type: "int", nullable: true),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -462,6 +558,44 @@ namespace CampusBook.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ExchangeReviews",
+                columns: table => new
+                {
+                    ReviewId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RequestId = table.Column<int>(type: "int", nullable: false),
+                    ReviewerId = table.Column<int>(type: "int", nullable: false),
+                    ReviewedUserId = table.Column<int>(type: "int", nullable: false),
+                    Rating = table.Column<int>(type: "int", nullable: false),
+                    Comment = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    IsHidden = table.Column<bool>(type: "bit", nullable: false),
+                    ModerationReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ExchangeReviews", x => x.ReviewId);
+                    table.ForeignKey(
+                        name: "FK_ExchangeReviews_BookRequests_RequestId",
+                        column: x => x.RequestId,
+                        principalTable: "BookRequests",
+                        principalColumn: "RequestId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ExchangeReviews_Users_ReviewedUserId",
+                        column: x => x.ReviewedUserId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ExchangeReviews_Users_ReviewerId",
+                        column: x => x.ReviewerId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Messages",
                 columns: table => new
                 {
@@ -492,29 +626,29 @@ namespace CampusBook.DataAccess.Migrations
 
             migrationBuilder.InsertData(
                 table: "BookCategories",
-                columns: new[] { "CategoryId", "Description", "Name" },
+                columns: new[] { "CategoryId", "CreatedAt", "Description", "IsActive", "Name" },
                 values: new object[,]
                 {
-                    { 1, "Programming, Algorithms, AI, Networking, Databases", "Computer Science & IT" },
-                    { 2, "Calculus, Linear Algebra, Discrete Math, Statistics", "Mathematics & Statistics" },
-                    { 3, "Circuit Analysis, Mechanics, Thermodynamics, Materials", "Engineering" },
-                    { 4, "Accounting, Finance, Marketing, Microeconomics, Management", "Business & Economics" },
-                    { 5, "Physics, Chemistry, Biology, Environmental Sciences", "Natural Sciences" },
-                    { 6, "History, Philosophy, Sociology, Psychology", "Humanities & Social Sciences" },
-                    { 7, "English, Fiction, Writing, Grammar, Foreign Languages", "Literature & Languages" }
+                    { 1, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Programming, Algorithms, AI, Networking, Databases", true, "Computer Science & IT" },
+                    { 2, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Calculus, Linear Algebra, Discrete Math, Statistics", true, "Mathematics & Statistics" },
+                    { 3, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Circuit Analysis, Mechanics, Thermodynamics, Materials", true, "Engineering" },
+                    { 4, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Accounting, Finance, Marketing, Microeconomics, Management", true, "Business & Economics" },
+                    { 5, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Physics, Chemistry, Biology, Environmental Sciences", true, "Natural Sciences" },
+                    { 6, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "History, Philosophy, Sociology, Psychology", true, "Humanities & Social Sciences" },
+                    { 7, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "English, Fiction, Writing, Grammar, Foreign Languages", true, "Literature & Languages" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Departments",
-                columns: new[] { "DepartmentId", "Code", "Name" },
+                columns: new[] { "DepartmentId", "Code", "IsActive", "Name" },
                 values: new object[,]
                 {
-                    { 1, "CSE", "Computer Science & Engineering" },
-                    { 2, "EEE", "Electrical & Electronic Engineering" },
-                    { 3, "BBA", "Business Administration" },
-                    { 4, "ECON", "Economics" },
-                    { 5, "ENG", "English Literature & Linguistics" },
-                    { 6, "MNS", "Mathematics & Natural Sciences" }
+                    { 1, "CSE", true, "Computer Science & Engineering" },
+                    { 2, "EEE", true, "Electrical & Electronic Engineering" },
+                    { 3, "BBA", true, "Business Administration" },
+                    { 4, "ECON", true, "Economics" },
+                    { 5, "ENG", true, "English Literature & Linguistics" },
+                    { 6, "MNS", true, "Mathematics & Natural Sciences" }
                 });
 
             migrationBuilder.InsertData(
@@ -560,7 +694,21 @@ namespace CampusBook.DataAccess.Migrations
                     { 26, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "View registered student users and verification status", "Administration", "Admin.Users.View" },
                     { 27, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Activate, suspend, or update student accounts", "Administration", "Admin.Users.Manage" },
                     { 28, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "View permission groups, assignments, and roles", "Administration", "Admin.Permissions.View" },
-                    { 29, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Configure permissions, map groups, and assign user overrides", "Administration", "Admin.Permissions.Manage" }
+                    { 29, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Configure permissions, map groups, and assign user overrides", "Administration", "Admin.Permissions.Manage" },
+                    { 30, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "View real-time database-backed admin metrics and dashboards", "Administration", "Admin.Dashboard.View" },
+                    { 31, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Search, filter, and view student accounts and verification status", "Administration", "Admin.Students.View" },
+                    { 32, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Review university affiliation and verify or reject student ID cards", "Administration", "Admin.Students.Verify" },
+                    { 33, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Suspend or reactivate student accounts with reason recording", "Administration", "Admin.Students.Suspend" },
+                    { 34, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Comprehensive student account management and profile oversight", "Administration", "Admin.Students.Manage" },
+                    { 35, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Inspect all student book listings across the platform", "Administration", "Admin.Books.View" },
+                    { 36, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Approve, reject, or archive inappropriate book listings", "Administration", "Admin.Books.Moderate" },
+                    { 37, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Create, edit, and activate/deactivate categories and academic classifications", "Administration", "Admin.Categories.Manage" },
+                    { 38, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Monitor book exchange requests, transactions, and reservation states", "Administration", "Admin.Requests.View" },
+                    { 39, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Inspect trade offers, completed exchanges, and handover records", "Administration", "Admin.Exchanges.View" },
+                    { 40, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Investigate user/listing complaints, resolve or dismiss reports", "Administration", "Admin.Reports.Manage" },
+                    { 41, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Moderate, hide, or restore student feedback and exchange ratings", "Administration", "Admin.Reviews.Moderate" },
+                    { 42, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Access institutional analytics, trend breakdowns, and CSV reports", "Administration", "Admin.Analytics.View" },
+                    { 43, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Inspect immutable security audit trails and administrative action history", "Administration", "Admin.AuditLogs.View" }
                 });
 
             migrationBuilder.InsertData(
@@ -627,6 +775,20 @@ namespace CampusBook.DataAccess.Migrations
                     { 2, 27, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
                     { 2, 28, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
                     { 2, 29, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 30, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 31, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 32, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 33, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 34, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 35, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 36, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 37, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 38, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 39, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 40, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 41, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 42, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 2, 43, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
                     { 3, 1, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
                     { 3, 2, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
                     { 3, 3, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
@@ -652,8 +814,26 @@ namespace CampusBook.DataAccess.Migrations
                     { 3, 23, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
                     { 3, 24, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
                     { 3, 25, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
-                    { 3, 26, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) }
+                    { 3, 26, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 3, 35, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 3, 36, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) },
+                    { 3, 40, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) }
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLogs_Action",
+                table: "AuditLogs",
+                column: "Action");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLogs_AdminUserId",
+                table: "AuditLogs",
+                column: "AdminUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLogs_TimestampUtc",
+                table: "AuditLogs",
+                column: "TimestampUtc");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BookCategories_Name",
@@ -718,6 +898,12 @@ namespace CampusBook.DataAccess.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Courses_DepartmentId_CourseCode",
+                table: "Courses",
+                columns: new[] { "DepartmentId", "CourseCode" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Departments_Code",
                 table: "Departments",
                 column: "Code",
@@ -743,6 +929,21 @@ namespace CampusBook.DataAccess.Migrations
                 table: "ExchangeOffers",
                 column: "RequestId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExchangeReviews_RequestId",
+                table: "ExchangeReviews",
+                column: "RequestId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExchangeReviews_ReviewedUserId",
+                table: "ExchangeReviews",
+                column: "ReviewedUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExchangeReviews_ReviewerId",
+                table: "ExchangeReviews",
+                column: "ReviewerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Messages_ConversationId_SentAt",
@@ -780,6 +981,26 @@ namespace CampusBook.DataAccess.Migrations
                 table: "Permissions",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_AssignedAdminId",
+                table: "Reports",
+                column: "AssignedAdminId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_ReporterId",
+                table: "Reports",
+                column: "ReporterId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_Status",
+                table: "Reports",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_TargetType_TargetId",
+                table: "Reports",
+                columns: new[] { "TargetType", "TargetId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Roles_RoleName",
@@ -869,7 +1090,16 @@ namespace CampusBook.DataAccess.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "AuditLogs");
+
+            migrationBuilder.DropTable(
+                name: "Courses");
+
+            migrationBuilder.DropTable(
                 name: "ExchangeOffers");
+
+            migrationBuilder.DropTable(
+                name: "ExchangeReviews");
 
             migrationBuilder.DropTable(
                 name: "Messages");
@@ -879,6 +1109,9 @@ namespace CampusBook.DataAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "PermissionGroupMaps");
+
+            migrationBuilder.DropTable(
+                name: "Reports");
 
             migrationBuilder.DropTable(
                 name: "StudentProfiles");

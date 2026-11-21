@@ -1,0 +1,99 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Permissions Management";
+    var groups = ViewBag.Groups as IEnumerable<CampusBook.Entities.PermissionGroup> ?? Enumerable.Empty<CampusBook.Entities.PermissionGroup>();
+    var permissions = ViewBag.Permissions as IEnumerable<CampusBook.Entities.Permission> ?? Enumerable.Empty<CampusBook.Entities.Permission>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Authorization & Permissions Matrix</h2>
+        <p class="text-muted small mb-0">Inspect database-driven system roles, group mappings, and discrete permission catalog.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Groups -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">System Permission Groups</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush small">
+                    @foreach (var g in groups)
+                    {
+                        <li class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold fs-6">@g.GroupName</span>
+                                @if (g.IsSystem)
+                                {
+                                    <span class="badge bg-secondary">System Role</span>
+                                }
+                            </div>
+                            <div class="text-muted">@g.Description</div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <!-- Assign Group Form -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Assign Group to User</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="AssignGroup" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Target User ID:</label>
+                        <input type="number" name="userId" class="form-control form-control-sm" placeholder="e.g. 5" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Select Role Group:</label>
+                        <select name="groupName" class="form-select form-select-sm" required>
+                            @foreach (var g in groups)
+                            {
+                                <option value="@g.GroupName">@g.GroupName</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100" onclick="return confirm('Assign group to user?');">
+                        Assign Group
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permissions Catalog -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Catalog of Discrete Permissions (@permissions.Count())</h5>
+            </div>
+            <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                <table class="table table-hover table-sm align-middle mb-0 small">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>Module</th>
+                            <th>Permission Name</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in permissions)
+                        {
+                            <tr>
+                                <td><span class="badge bg-light text-dark border">@p.Module</span></td>
+                                <td class="fw-bold font-monospace text-primary">@p.Name</td>
+                                <td class="text-muted">@p.Description</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

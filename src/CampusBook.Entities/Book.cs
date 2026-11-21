@@ -27,6 +27,9 @@ public class Book
     public virtual User Owner { get; set; } = null!;
 
     public BookStatus Status { get; set; } = BookStatus.Available;
+    public string? ModerationReason { get; set; }
+    public DateTime? ModeratedAt { get; set; }
+    public int? ModeratedByAdminId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

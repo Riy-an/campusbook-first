@@ -27,6 +27,10 @@ public class ApplicationDbContext : DbContext
     public DbSet<PermissionGroup> PermissionGroups => Set<PermissionGroup>();
     public DbSet<PermissionGroupMap> PermissionGroupMaps => Set<PermissionGroupMap>();
     public DbSet<UserPermission> UserPermissions => Set<UserPermission>();
+    public DbSet<Course> Courses => Set<Course>();
+    public DbSet<Report> Reports => Set<Report>();
+    public DbSet<ExchangeReview> ExchangeReviews => Set<ExchangeReview>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -383,6 +387,80 @@ public class ApplicationDbContext : DbContext
                 .IsUnique();
         });
 
+        // Course configuration
+        modelBuilder.Entity<Course>(entity =>
+        {
+            entity.ToTable("Courses");
+            entity.HasKey(c => c.CourseId);
+            entity.Property(c => c.CourseCode).IsRequired().HasMaxLength(20);
+            entity.Property(c => c.CourseName).IsRequired().HasMaxLength(150);
+            entity.HasIndex(c => new { c.DepartmentId, c.CourseCode }).IsUnique();
+            entity.HasOne(c => c.Department)
+                .WithMany(d => d.Courses)
+                .HasForeignKey(c => c.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Report configuration
+        modelBuilder.Entity<Report>(entity =>
+        {
+            entity.ToTable("Reports");
+            entity.HasKey(r => r.ReportId);
+            entity.Property(r => r.Reason).IsRequired().HasMaxLength(100);
+            entity.Property(r => r.Description).IsRequired().HasMaxLength(2000);
+            entity.Property(r => r.ResolutionNotes).HasMaxLength(2000);
+            entity.HasIndex(r => r.Status);
+            entity.HasIndex(r => new { r.TargetType, r.TargetId });
+            entity.HasOne(r => r.Reporter)
+                .WithMany(u => u.ReportsSubmitted)
+                .HasForeignKey(r => r.ReporterId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(r => r.AssignedAdmin)
+                .WithMany(u => u.ReportsAssigned)
+                .HasForeignKey(r => r.AssignedAdminId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ExchangeReview configuration
+        modelBuilder.Entity<ExchangeReview>(entity =>
+        {
+            entity.ToTable("ExchangeReviews");
+            entity.HasKey(r => r.ReviewId);
+            entity.Property(r => r.Comment).IsRequired().HasMaxLength(2000);
+            entity.Property(r => r.ModerationReason).HasMaxLength(500);
+            entity.HasIndex(r => r.RequestId);
+            entity.HasOne(r => r.Request)
+                .WithMany(req => req.Reviews)
+                .HasForeignKey(r => r.RequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(r => r.Reviewer)
+                .WithMany(u => u.ReviewsGiven)
+                .HasForeignKey(r => r.ReviewerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(r => r.ReviewedUser)
+                .WithMany(u => u.ReviewsReceived)
+                .HasForeignKey(r => r.ReviewedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // AuditLog configuration
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("AuditLogs");
+            entity.HasKey(a => a.AuditLogId);
+            entity.Property(a => a.Action).IsRequired().HasMaxLength(100);
+            entity.Property(a => a.TargetEntityType).IsRequired().HasMaxLength(100);
+            entity.Property(a => a.TargetId).HasMaxLength(100);
+            entity.Property(a => a.Details).IsRequired().HasMaxLength(4000);
+            entity.Property(a => a.IpAddress).HasMaxLength(50);
+            entity.HasIndex(a => a.TimestampUtc);
+            entity.HasIndex(a => a.Action);
+            entity.HasOne(a => a.AdminUser)
+                .WithMany(u => u.AuditLogs)
+                .HasForeignKey(a => a.AdminUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
         // Seed initial lookup data
         SeedLookupData(modelBuilder);
     }
@@ -394,26 +472,26 @@ public class ApplicationDbContext : DbContext
             new Role { RoleId = 2, RoleName = "Admin" }
         );
 
+        var seedTimestamp = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+
         modelBuilder.Entity<Department>().HasData(
-            new Department { DepartmentId = 1, Name = "Computer Science & Engineering", Code = "CSE" },
-            new Department { DepartmentId = 2, Name = "Electrical & Electronic Engineering", Code = "EEE" },
-            new Department { DepartmentId = 3, Name = "Business Administration", Code = "BBA" },
-            new Department { DepartmentId = 4, Name = "Economics", Code = "ECON" },
-            new Department { DepartmentId = 5, Name = "English Literature & Linguistics", Code = "ENG" },
-            new Department { DepartmentId = 6, Name = "Mathematics & Natural Sciences", Code = "MNS" }
+            new Department { DepartmentId = 1, Name = "Computer Science & Engineering", Code = "CSE", IsActive = true },
+            new Department { DepartmentId = 2, Name = "Electrical & Electronic Engineering", Code = "EEE", IsActive = true },
+            new Department { DepartmentId = 3, Name = "Business Administration", Code = "BBA", IsActive = true },
+            new Department { DepartmentId = 4, Name = "Economics", Code = "ECON", IsActive = true },
+            new Department { DepartmentId = 5, Name = "English Literature & Linguistics", Code = "ENG", IsActive = true },
+            new Department { DepartmentId = 6, Name = "Mathematics & Natural Sciences", Code = "MNS", IsActive = true }
         );
 
         modelBuilder.Entity<BookCategory>().HasData(
-            new BookCategory { CategoryId = 1, Name = "Computer Science & IT", Description = "Programming, Algorithms, AI, Networking, Databases" },
-            new BookCategory { CategoryId = 2, Name = "Mathematics & Statistics", Description = "Calculus, Linear Algebra, Discrete Math, Statistics" },
-            new BookCategory { CategoryId = 3, Name = "Engineering", Description = "Circuit Analysis, Mechanics, Thermodynamics, Materials" },
-            new BookCategory { CategoryId = 4, Name = "Business & Economics", Description = "Accounting, Finance, Marketing, Microeconomics, Management" },
-            new BookCategory { CategoryId = 5, Name = "Natural Sciences", Description = "Physics, Chemistry, Biology, Environmental Sciences" },
-            new BookCategory { CategoryId = 6, Name = "Humanities & Social Sciences", Description = "History, Philosophy, Sociology, Psychology" },
-            new BookCategory { CategoryId = 7, Name = "Literature & Languages", Description = "English, Fiction, Writing, Grammar, Foreign Languages" }
+            new BookCategory { CategoryId = 1, Name = "Computer Science & IT", Description = "Programming, Algorithms, AI, Networking, Databases", IsActive = true, CreatedAt = seedTimestamp },
+            new BookCategory { CategoryId = 2, Name = "Mathematics & Statistics", Description = "Calculus, Linear Algebra, Discrete Math, Statistics", IsActive = true, CreatedAt = seedTimestamp },
+            new BookCategory { CategoryId = 3, Name = "Engineering", Description = "Circuit Analysis, Mechanics, Thermodynamics, Materials", IsActive = true, CreatedAt = seedTimestamp },
+            new BookCategory { CategoryId = 4, Name = "Business & Economics", Description = "Accounting, Finance, Marketing, Microeconomics, Management", IsActive = true, CreatedAt = seedTimestamp },
+            new BookCategory { CategoryId = 5, Name = "Natural Sciences", Description = "Physics, Chemistry, Biology, Environmental Sciences", IsActive = true, CreatedAt = seedTimestamp },
+            new BookCategory { CategoryId = 6, Name = "Humanities & Social Sciences", Description = "History, Philosophy, Sociology, Psychology", IsActive = true, CreatedAt = seedTimestamp },
+            new BookCategory { CategoryId = 7, Name = "Literature & Languages", Description = "English, Fiction, Writing, Grammar, Foreign Languages", IsActive = true, CreatedAt = seedTimestamp }
         );
-
-        var seedTimestamp = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
         // Seed Permission Groups
         modelBuilder.Entity<PermissionGroup>().HasData(
@@ -453,7 +531,21 @@ public class ApplicationDbContext : DbContext
             new Permission { PermissionId = 26, Name = "Admin.Users.View", Module = "Administration", Description = "View registered student users and verification status", CreatedAt = seedTimestamp },
             new Permission { PermissionId = 27, Name = "Admin.Users.Manage", Module = "Administration", Description = "Activate, suspend, or update student accounts", CreatedAt = seedTimestamp },
             new Permission { PermissionId = 28, Name = "Admin.Permissions.View", Module = "Administration", Description = "View permission groups, assignments, and roles", CreatedAt = seedTimestamp },
-            new Permission { PermissionId = 29, Name = "Admin.Permissions.Manage", Module = "Administration", Description = "Configure permissions, map groups, and assign user overrides", CreatedAt = seedTimestamp }
+            new Permission { PermissionId = 29, Name = "Admin.Permissions.Manage", Module = "Administration", Description = "Configure permissions, map groups, and assign user overrides", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 30, Name = "Admin.Dashboard.View", Module = "Administration", Description = "View real-time database-backed admin metrics and dashboards", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 31, Name = "Admin.Students.View", Module = "Administration", Description = "Search, filter, and view student accounts and verification status", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 32, Name = "Admin.Students.Verify", Module = "Administration", Description = "Review university affiliation and verify or reject student ID cards", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 33, Name = "Admin.Students.Suspend", Module = "Administration", Description = "Suspend or reactivate student accounts with reason recording", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 34, Name = "Admin.Students.Manage", Module = "Administration", Description = "Comprehensive student account management and profile oversight", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 35, Name = "Admin.Books.View", Module = "Administration", Description = "Inspect all student book listings across the platform", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 36, Name = "Admin.Books.Moderate", Module = "Administration", Description = "Approve, reject, or archive inappropriate book listings", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 37, Name = "Admin.Categories.Manage", Module = "Administration", Description = "Create, edit, and activate/deactivate categories and academic classifications", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 38, Name = "Admin.Requests.View", Module = "Administration", Description = "Monitor book exchange requests, transactions, and reservation states", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 39, Name = "Admin.Exchanges.View", Module = "Administration", Description = "Inspect trade offers, completed exchanges, and handover records", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 40, Name = "Admin.Reports.Manage", Module = "Administration", Description = "Investigate user/listing complaints, resolve or dismiss reports", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 41, Name = "Admin.Reviews.Moderate", Module = "Administration", Description = "Moderate, hide, or restore student feedback and exchange ratings", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 42, Name = "Admin.Analytics.View", Module = "Administration", Description = "Access institutional analytics, trend breakdowns, and CSV reports", CreatedAt = seedTimestamp },
+            new Permission { PermissionId = 43, Name = "Admin.AuditLogs.View", Module = "Administration", Description = "Inspect immutable security audit trails and administrative action history", CreatedAt = seedTimestamp }
         };
         modelBuilder.Entity<Permission>().HasData(permissions);
 
@@ -466,15 +558,15 @@ public class ApplicationDbContext : DbContext
             groupMaps.Add(new PermissionGroupMap { PermissionGroupId = 1, PermissionId = pid, CreatedAt = seedTimestamp });
         }
 
-        // 2. Moderator permissions: All student permissions + 5, 6, 10, 17, 26
-        var modExtraIds = new[] { 5, 6, 10, 17, 26 };
+        // 2. Moderator permissions: All student permissions + 5, 6, 10, 17, 26, 35, 36, 40
+        var modExtraIds = new[] { 5, 6, 10, 17, 26, 35, 36, 40 };
         foreach (var pid in studentPermIds.Concat(modExtraIds))
         {
             groupMaps.Add(new PermissionGroupMap { PermissionGroupId = 3, PermissionId = pid, CreatedAt = seedTimestamp });
         }
 
-        // 3. Admin permissions: 1 through 29
-        for (int pid = 1; pid <= 29; pid++)
+        // 3. Admin permissions: 1 through 43
+        for (int pid = 1; pid <= 43; pid++)
         {
             groupMaps.Add(new PermissionGroupMap { PermissionGroupId = 2, PermissionId = pid, CreatedAt = seedTimestamp });
         }

@@ -14,6 +14,10 @@ public class StudentProfile
     public string? StudentIdCardUrl { get; set; }
     public int IdCardChangeCount { get; set; } = 0;
     public string? Bio { get; set; }
+    public StudentVerificationStatus VerificationStatus { get; set; } = StudentVerificationStatus.Pending;
+    public string? VerificationNotes { get; set; }
+    public DateTime? VerifiedAt { get; set; }
+    public int? VerifiedByAdminId { get; set; }
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 

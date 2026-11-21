@@ -21,7 +21,7 @@ public static class Extensions
 
     public static string ToPriceText(this decimal price)
     {
-        return price <= 0 ? "Free / Donation" : (price % 1 == 0 ? $"৳{price:N0}" : $"৳{price:N2}");
+        return price <= 0 ? "" : (price % 1 == 0 ? $"৳{price:N0}" : $"৳{price:N2}");
     }
 
     public static string Truncate(this string? value, int maxLength, string suffix = "...")

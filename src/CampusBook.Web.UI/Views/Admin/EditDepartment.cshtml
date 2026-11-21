@@ -1,0 +1,49 @@
+@model CampusBook.Facade.ViewModels.Admin.DepartmentEditViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = Model.DepartmentId > 0 ? "Edit Department" : "Add Department";
+}
+
+<div class="mb-3">
+    <a asp-action="Departments" class="btn btn-sm btn-link text-decoration-none px-0">&larr; Back to Departments</a>
+    <h2 class="h4 fw-bold">@(Model.DepartmentId > 0 ? "Edit Department" : "Add New Department")</h2>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <form asp-action="SaveDepartment" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="DepartmentId" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger small"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label small fw-bold">Department Full Name</label>
+                        <input asp-for="Name" class="form-control" placeholder="e.g. Electrical & Electronic Engineering" required />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Code" class="form-label small fw-bold">Department Code</label>
+                        <input asp-for="Code" class="form-control" placeholder="e.g. EEE" required />
+                        <span asp-validation-for="Code" class="text-danger small"></span>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" id="isDeptActiveCheck" />
+                        <label class="form-check-label small" for="isDeptActiveCheck">
+                            Department is active
+                        </label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm px-4">Save Department</button>
+                        <a asp-action="Departments" class="btn btn-outline-secondary btn-sm">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -24,6 +24,7 @@ public class BookRequest
 
     public virtual ExchangeOffer? ExchangeOffer { get; set; }
     public virtual Conversation? Conversation { get; set; }
+    public virtual ICollection<ExchangeReview> Reviews { get; set; } = new List<ExchangeReview>();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

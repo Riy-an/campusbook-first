@@ -1,0 +1,133 @@
+@model CampusBook.Entities.Book
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Moderation - {Model.Title}";
+}
+
+<div class="mb-3">
+    <a asp-action="Books" class="btn btn-sm btn-link text-decoration-none px-0">&larr; Back to Listings</a>
+    <h2 class="h4 fw-bold">Book Listing Details & Moderation</h2>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Listing Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 text-center">
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <img src="@Model.ImageUrl" alt="Cover" class="img-fluid rounded border shadow-sm mb-2" style="max-height: 200px;" />
+                        }
+                        else
+                        {
+                            <div class="p-4 bg-light rounded border text-muted small">No cover uploaded</div>
+                        }
+                    </div>
+                    <div class="col-md-8">
+                        <h4 class="h5 fw-bold mb-1">@Model.Title</h4>
+                        <div class="text-muted small mb-2">Author: @Model.Author</div>
+                        <div>
+                            <span class="badge bg-light text-dark border">@Model.Category?.Name</span>
+                            <span class="badge bg-light text-dark border">Condition: @Model.Condition</span>
+                            <span class="badge bg-light text-dark border">Type: @Model.ExchangeType</span>
+                        </div>
+                        @if (Model.ExchangeType == CampusBook.Entities.ExchangeType.Sale)
+                        {
+                            <div class="fs-4 fw-bold text-primary mt-2">৳@Model.Price</div>
+                        }
+                    </div>
+                </div>
+
+                <dl class="row small mb-0">
+                    <dt class="col-sm-3 text-muted">Description</dt>
+                    <dd class="col-sm-9">@Model.Description</dd>
+
+                    <dt class="col-sm-3 text-muted">ISBN</dt>
+                    <dd class="col-sm-9">@(Model.Isbn ?? "N/A")</dd>
+
+                    <dt class="col-sm-3 text-muted">Course Code</dt>
+                    <dd class="col-sm-9">@(Model.CourseCode ?? "N/A")</dd>
+
+                    <dt class="col-sm-3 text-muted">Current Status</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge @(Model.Status == CampusBook.Entities.BookStatus.Available ? "bg-success" : "bg-secondary")">
+                            @Model.Status
+                        </span>
+                        @if (!string.IsNullOrEmpty(Model.ModerationReason))
+                        {
+                            <div class="text-danger small mt-1">Moderation Note: @Model.ModerationReason</div>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-3 text-muted">Published</dt>
+                    <dd class="col-sm-9">@Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm") UTC</dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Owner Information -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Listing Owner</h5>
+            </div>
+            <div class="card-body small">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold fs-6">@Model.Owner?.FullName</div>
+                        <div class="text-muted">Student ID: @Model.Owner?.StudentId &bull; @Model.Owner?.Email</div>
+                        <div class="text-muted">Dept: @(Model.Owner?.StudentProfile?.Department ?? "N/A")</div>
+                    </div>
+                    <a asp-action="StudentDetails" asp-route-id="@Model.OwnerId" class="btn btn-sm btn-outline-secondary">
+                        View Student &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Moderation Controls -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Moderation Actions</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Status != CampusBook.Entities.BookStatus.Available)
+                {
+                    <form asp-action="ApproveBook" asp-route-id="@Model.BookId" method="post" class="mb-3">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success btn-sm w-100" onclick="return confirm('Approve and publish listing to student catalogue?');">
+                            ✅ Approve & Mark Available
+                        </button>
+                    </form>
+                }
+
+                <form asp-action="RejectBook" asp-route-id="@Model.BookId" method="post" class="mb-3">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Reject with Reason:</label>
+                        <textarea name="reason" class="form-control form-control-sm" rows="2" placeholder="e.g. Inappropriate content, invalid price..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-warning btn-sm w-100" onclick="return confirm('Reject listing? It will be removed from catalogue.');">
+                        ⚠️ Reject Listing
+                    </button>
+                </form>
+
+                <form asp-action="ArchiveBook" asp-route-id="@Model.BookId" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Archive / Take Down:</label>
+                        <textarea name="reason" class="form-control form-control-sm" rows="2" placeholder="Reason for archival..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Archive listing?');">
+                        🚫 Archive Listing
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,90 @@
+@model CampusBook.Facade.ViewModels.Admin.CourseManagementViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Course Classifications";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Course Classifications</h2>
+        <p class="text-muted small mb-0">Academic courses and subject codes mapped to departments.</p>
+    </div>
+    <div>
+        <a asp-action="CreateCourse" asp-route-departmentId="@Model.SelectedDepartmentId" class="btn btn-primary btn-sm">+ Add Course</a>
+    </div>
+</div>
+
+<!-- Department Filter -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <select name="departmentId" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">All Departments</option>
+                    @foreach (var d in Model.Departments)
+                    {
+                        <option value="@d.DepartmentId" selected="@(Model.SelectedDepartmentId == d.DepartmentId)">@d.Name (@d.Code)</option>
+                    }
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small">
+                <tr>
+                    <th>Course Code</th>
+                    <th>Course Name</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Courses.Any())
+                {
+                    @foreach (var c in Model.Courses)
+                    {
+                        <tr>
+                            <td class="fw-bold"><span class="badge bg-light text-dark border">@c.CourseCode</span></td>
+                            <td>@c.CourseName</td>
+                            <td>@c.Department?.Name (@c.Department?.Code)</td>
+                            <td>
+                                @if (c.IsActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a asp-action="EditCourse" asp-route-id="@c.CourseId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                    <form asp-action="ToggleCourse" asp-route-id="@c.CourseId" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm @(c.IsActive ? "btn-outline-warning" : "btn-outline-success")">
+                                            @(c.IsActive ? "Deactivate" : "Activate")
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            No courses found for the selected department.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

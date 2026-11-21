@@ -1,0 +1,111 @@
+@model CampusBook.Entities.BookRequest
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Request #{Model.RequestId} Details";
+}
+
+<div class="mb-3">
+    <a asp-action="Requests" class="btn btn-sm btn-link text-decoration-none px-0">&larr; Back to Requests</a>
+    <h2 class="h4 fw-bold">Request Inspection: #@Model.RequestId</h2>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Transaction Parties & Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold small text-muted">REQUESTED BOOK</h6>
+                            <div class="fw-bold fs-6">@Model.Book?.Title</div>
+                            <div class="small text-muted">By @Model.Book?.Author</div>
+                            <div class="small mt-1">Listing Type: <span class="badge bg-light text-dark border">@Model.Book?.ExchangeType</span></div>
+                            <div class="small mt-1">Owner: <span class="fw-bold">@Model.Book?.Owner?.FullName</span> (@Model.Book?.Owner?.Email)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold small text-muted">REQUESTING STUDENT</h6>
+                            <div class="fw-bold fs-6">@Model.Requester?.FullName</div>
+                            <div class="small text-muted">Student ID: @Model.Requester?.StudentId</div>
+                            <div class="small text-muted">Email: @Model.Requester?.Email</div>
+                            <div class="small mt-1">Dept: @(Model.Requester?.StudentProfile?.Department ?? "N/A")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <dl class="row small mb-0">
+                    <dt class="col-sm-3 text-muted">Current Status</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge @(Model.Status == CampusBook.Entities.RequestStatus.Completed ? "bg-success" : (Model.Status == CampusBook.Entities.RequestStatus.Accepted ? "bg-info text-dark" : "bg-warning text-dark"))">
+                            @Model.Status
+                        </span>
+                    </dd>
+
+                    <dt class="col-sm-3 text-muted">Request Message</dt>
+                    <dd class="col-sm-9">@(Model.RequestMessage ?? "None provided")</dd>
+
+                    <dt class="col-sm-3 text-muted">Owner Handover</dt>
+                    <dd class="col-sm-9">
+                        @(Model.OwnerConfirmed ? $"Confirmed at {Model.OwnerConfirmedAt:yyyy-MM-dd HH:mm} UTC" : "Pending confirmation")
+                    </dd>
+
+                    <dt class="col-sm-3 text-muted">Requester Handover</dt>
+                    <dd class="col-sm-9">
+                        @(Model.RequesterConfirmed ? $"Confirmed at {Model.RequesterConfirmedAt:yyyy-MM-dd HH:mm} UTC" : "Pending confirmation")
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (Model.ExchangeOffer != null)
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title h6 fw-bold mb-0">Offered Trade Book Details</h5>
+                </div>
+                <div class="card-body small">
+                    <div class="fw-bold fs-6">@Model.ExchangeOffer.Title</div>
+                    <div class="text-muted">By @Model.ExchangeOffer.Author &bull; Condition: @Model.ExchangeOffer.Condition</div>
+                    <p class="mt-2 mb-0">@Model.ExchangeOffer.Description</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Intervention Controls -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Administrative Intervention</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Status != CampusBook.Entities.RequestStatus.Completed && Model.Status != CampusBook.Entities.RequestStatus.Cancelled)
+                {
+                    <p class="small text-muted mb-3">
+                        Cancelling this request will automatically release any active reservations on the books involved.
+                    </p>
+                    <form asp-action="CancelRequest" asp-route-id="@Model.RequestId" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Intervention Reason:</label>
+                            <textarea name="reason" class="form-control form-control-sm" rows="2" placeholder="e.g. Unresponsive party, reported issue..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-sm w-100" onclick="return confirm('Cancel this request and release reservations?');">
+                            🚫 Cancel Request & Release Books
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-secondary small mb-0">
+                        This request is in final state (<strong>@Model.Status</strong>). No further intervention can be performed.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,56 @@
+@model CampusBook.Facade.ViewModels.Admin.DepartmentManagementViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Department Management";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Academic Departments</h2>
+        <p class="text-muted small mb-0">Manage university departments, faculty divisions, and academic codes.</p>
+    </div>
+    <div>
+        <a asp-action="CreateDepartment" class="btn btn-primary btn-sm">+ Add Department</a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small">
+                <tr>
+                    <th>Department Name</th>
+                    <th>Code</th>
+                    <th>Courses</th>
+                    <th>Listings</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var (dept, courses, books) in Model.Departments)
+                {
+                    <tr>
+                        <td class="fw-bold">@dept.Name</td>
+                        <td><span class="badge bg-light text-dark border">@dept.Code</span></td>
+                        <td><a asp-action="Courses" asp-route-departmentId="@dept.DepartmentId" class="badge bg-info text-dark text-decoration-none">@courses courses</a></td>
+                        <td><span class="badge bg-light text-dark border">@books listings</span></td>
+                        <td>
+                            @if (dept.IsActive)
+                            {
+                                <span class="badge bg-success-subtle text-success border border-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary">Inactive</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="EditDepartment" asp-route-id="@dept.DepartmentId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,84 @@
+@model CampusBook.Facade.ViewModels.Admin.ReviewModerationListViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Exchange Reviews Moderation";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Exchange Reviews & Ratings</h2>
+        <p class="text-muted small mb-0">Inspect peer reviews, monitor rating feedback, and hide inappropriate or abusive comments.</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small">
+                <tr>
+                    <th>Reviewer</th>
+                    <th>Reviewed User</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Book</th>
+                    <th>Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Reviews.Any())
+                {
+                    @foreach (var r in Model.Reviews)
+                    {
+                        <tr class="@(r.IsHidden ? "table-secondary text-muted" : "")">
+                            <td>@r.Reviewer?.FullName</td>
+                            <td>@r.ReviewedUser?.FullName</td>
+                            <td>
+                                <span class="text-warning">@string.Concat(Enumerable.Repeat("★", r.Rating))</span>
+                                <span class="small text-muted">(@r.Rating/5)</span>
+                            </td>
+                            <td class="small">
+                                @r.Comment
+                                @if (r.IsHidden)
+                                {
+                                    <div class="text-danger small mt-1">Hidden: @r.ModerationReason</div>
+                                }
+                            </td>
+                            <td>@r.Request?.Book?.Title</td>
+                            <td class="small text-muted">@r.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td class="text-end">
+                                @if (!r.IsHidden)
+                                {
+                                    <form asp-action="HideReview" asp-route-id="@r.ReviewId" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="reason" value="Hidden by administrator for policy violation." />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hide this review from public display?');">
+                                            Hide Review
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="RestoreReview" asp-route-id="@r.ReviewId" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-success">
+                                            Restore
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            No exchange reviews recorded yet.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

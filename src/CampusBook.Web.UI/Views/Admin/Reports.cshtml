@@ -1,0 +1,106 @@
+@model CampusBook.Facade.ViewModels.Admin.ReportListViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Reports & Complaints";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Reports & Moderation Complaints</h2>
+        <p class="text-muted small mb-0">Investigate user reports on suspicious listings, abusive chats, or peer accounts.</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option value="1" selected="@(Model.Status == CampusBook.Entities.ReportStatus.Pending)">Pending</option>
+                    <option value="2" selected="@(Model.Status == CampusBook.Entities.ReportStatus.UnderReview)">Under Review</option>
+                    <option value="3" selected="@(Model.Status == CampusBook.Entities.ReportStatus.Resolved)">Resolved</option>
+                    <option value="4" selected="@(Model.Status == CampusBook.Entities.ReportStatus.Dismissed)">Dismissed</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <select name="targetType" class="form-select form-select-sm">
+                    <option value="">All Target Types</option>
+                    <option value="1" selected="@(Model.TargetType == CampusBook.Entities.ReportTargetType.User)">Reported User</option>
+                    <option value="2" selected="@(Model.TargetType == CampusBook.Entities.ReportTargetType.Book)">Reported Book Listing</option>
+                    <option value="3" selected="@(Model.TargetType == CampusBook.Entities.ReportTargetType.Message)">Reported Chat Message</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small">
+                <tr>
+                    <th>Report #</th>
+                    <th>Target Type</th>
+                    <th>Target ID</th>
+                    <th>Reason</th>
+                    <th>Reporter</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Reports.Any())
+                {
+                    @foreach (var r in Model.Reports)
+                    {
+                        <tr>
+                            <td>#@r.ReportId</td>
+                            <td><span class="badge bg-light text-dark border">@r.TargetType</span></td>
+                            <td>#@r.TargetId</td>
+                            <td class="fw-bold">@r.Reason</td>
+                            <td>@r.Reporter?.FullName</td>
+                            <td>
+                                @if (r.Status == CampusBook.Entities.ReportStatus.Pending)
+                                {
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                }
+                                else if (r.Status == CampusBook.Entities.ReportStatus.UnderReview)
+                                {
+                                    <span class="badge bg-info text-dark">Under Review</span>
+                                }
+                                else if (r.Status == CampusBook.Entities.ReportStatus.Resolved)
+                                {
+                                    <span class="badge bg-success">Resolved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Dismissed</span>
+                                }
+                            </td>
+                            <td class="small text-muted">@r.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td class="text-end">
+                                <a asp-action="ReportDetails" asp-route-id="@r.ReportId" class="btn btn-sm btn-outline-primary">
+                                    Investigate &rarr;
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            No reports found matching the criteria.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

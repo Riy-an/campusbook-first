@@ -70,10 +70,27 @@ public static class Permissions
     // Module: Administration
     public static class Admin
     {
+        // Core & Legacy Aliases
         public const string UsersView = "Admin.Users.View";
         public const string UsersManage = "Admin.Users.Manage";
         public const string PermissionsView = "Admin.Permissions.View";
         public const string PermissionsManage = "Admin.Permissions.Manage";
+
+        // Granular Admin Permissions
+        public const string DashboardView = "Admin.Dashboard.View";
+        public const string StudentsView = "Admin.Students.View";
+        public const string StudentsVerify = "Admin.Students.Verify";
+        public const string StudentsSuspend = "Admin.Students.Suspend";
+        public const string StudentsManage = "Admin.Students.Manage";
+        public const string BooksView = "Admin.Books.View";
+        public const string BooksModerate = "Admin.Books.Moderate";
+        public const string CategoriesManage = "Admin.Categories.Manage";
+        public const string RequestsView = "Admin.Requests.View";
+        public const string ExchangesView = "Admin.Exchanges.View";
+        public const string ReportsManage = "Admin.Reports.Manage";
+        public const string ReviewsModerate = "Admin.Reviews.Moderate";
+        public const string AnalyticsView = "Admin.Analytics.View";
+        public const string AuditLogsView = "Admin.AuditLogs.View";
     }
 
     // Group Names

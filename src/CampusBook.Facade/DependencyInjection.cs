@@ -37,12 +37,15 @@ public static class DependencyInjection
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IConversationRepository, ConversationRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IAdminRepository, AdminRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 
         // 3. Application Infrastructure Services
         services.AddMemoryCache();
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddScoped<IFileStorageService, FileStorageService>();
         services.AddSingleton<IEmailSender, DevelopmentEmailSender>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
 
         // 4. Business Facades
         services.AddScoped<IUserFacade, UserFacade>();
@@ -56,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<IConversationFacade, ConversationFacade>();
         services.AddScoped<IExchangeHistoryFacade, ExchangeHistoryFacade>();
         services.AddScoped<IPermissionService, PermissionService>();
+        services.AddScoped<IAdminFacade, AdminFacade>();
 
         return services;
     }

@@ -1,0 +1,211 @@
+@model CampusBook.Facade.ViewModels.Admin.StudentDetailsViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Student - {Model.User.FullName}";
+}
+
+<div class="mb-3">
+    <a asp-action="Students" class="btn btn-sm btn-link text-decoration-none px-0">&larr; Back to Students</a>
+    <h2 class="h4 fw-bold">Student Profile Review: @Model.User.FullName</h2>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Identity & Verification -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Academic & Identity Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    @if (!string.IsNullOrEmpty(Model.Profile?.ProfilePictureUrl))
+                    {
+                        <img src="@Model.Profile.ProfilePictureUrl" alt="Avatar" class="rounded-circle border" width="70" height="70" style="object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center border" style="width: 70px; height: 70px; font-size: 2rem;">🎓</div>
+                    }
+                    <div>
+                        <h4 class="h5 fw-bold mb-1">@Model.User.FullName</h4>
+                        <div class="text-muted small">Student ID: <span class="fw-bold">@Model.User.StudentId</span></div>
+                        <div class="text-muted small">Registered: @Model.User.CreatedAt.ToString("MMMM dd, yyyy")</div>
+                    </div>
+                </div>
+
+                <dl class="row small mb-0">
+                    <dt class="col-sm-4 text-muted">Personal Email</dt>
+                    <dd class="col-sm-8">@Model.User.Email</dd>
+
+                    <dt class="col-sm-4 text-muted">University Email</dt>
+                    <dd class="col-sm-8 fw-bold">@(Model.Profile?.UniversityEmail ?? "N/A")</dd>
+
+                    <dt class="col-sm-4 text-muted">Department</dt>
+                    <dd class="col-sm-8">@(Model.Profile?.Department ?? "N/A")</dd>
+
+                    <dt class="col-sm-4 text-muted">Batch</dt>
+                    <dd class="col-sm-8">@(Model.Profile?.Batch ?? "N/A")</dd>
+
+                    <dt class="col-sm-4 text-muted">Contact Phone</dt>
+                    <dd class="col-sm-8">@(Model.Profile?.PhoneNumber ?? "Not provided")</dd>
+
+                    <dt class="col-sm-4 text-muted">Account Status</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.User.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Suspended</span>
+                            <div class="text-danger small mt-1">Reason: @Model.User.SuspensionReason</div>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted">Verification</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Profile?.VerificationStatus == CampusBook.Entities.StudentVerificationStatus.Verified)
+                        {
+                            <span class="badge bg-success">Verified</span>
+                        }
+                        else if (Model.Profile?.VerificationStatus == CampusBook.Entities.StudentVerificationStatus.Rejected)
+                        {
+                            <span class="badge bg-danger">Rejected</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">Pending Review</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- University ID Card Document Review -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">University ID Card Document</h5>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(Model.Profile?.StudentIdCardUrl))
+                {
+                    <div class="text-center mb-3">
+                        <img src="@Model.Profile.StudentIdCardUrl" alt="University ID Card" class="img-fluid rounded border shadow-sm" style="max-height: 250px;" />
+                    </div>
+                    <div class="text-muted small text-center mb-3">
+                        Times ID card photo updated: @Model.Profile.IdCardChangeCount / 3
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-secondary small text-center mb-3">
+                        No University ID Card uploaded.
+                    </div>
+                }
+
+                <!-- Verification Action Form -->
+                <form asp-action="VerifyStudent" asp-route-id="@Model.User.UserId" method="post" class="p-3 bg-light rounded border">
+                    @Html.AntiForgeryToken()
+                    <h6 class="fw-bold small mb-2">Administrative Verification Decision</h6>
+                    <div class="mb-2">
+                        <label class="form-label small">Verification Decision:</label>
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="2" selected="@(Model.Profile?.VerificationStatus == CampusBook.Entities.StudentVerificationStatus.Verified)">Verify Student (Approve)</option>
+                            <option value="3" selected="@(Model.Profile?.VerificationStatus == CampusBook.Entities.StudentVerificationStatus.Rejected)">Reject Verification</option>
+                            <option value="1" selected="@(Model.Profile?.VerificationStatus == CampusBook.Entities.StudentVerificationStatus.Pending)">Mark Pending</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Notes / Reason (optional):</label>
+                        <input type="text" name="notes" value="@Model.Profile?.VerificationNotes" class="form-control form-control-sm" placeholder="e.g. Valid enrollment ID verified" />
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Save Verification Decision</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Account Controls, Metrics, and Permissions -->
+    <div class="col-lg-6">
+        <!-- Account Status & Suspension Controls -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Account Moderation & Suspension</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.User.IsActive)
+                {
+                    <p class="small text-muted mb-3">
+                        Suspending this student immediately revokes their active session and blocks login and all student operations.
+                    </p>
+                    <form asp-action="SuspendStudent" asp-route-id="@Model.User.UserId" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Reason for Suspension (required):</label>
+                            <textarea name="reason" class="form-control form-control-sm" rows="2" placeholder="Specify violation, abusive behavior, or suspicious activity..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to suspend this account? Access will be cut off immediately.');">
+                            🚫 Suspend Student Account
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-danger small mb-3">
+                        <strong>Account Suspended:</strong> @Model.User.SuspensionReason
+                    </div>
+                    <form asp-action="ReactivateStudent" asp-route-id="@Model.User.UserId" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Reactivate this student account?');">
+                            ✅ Reactivate Student Account
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <!-- Student Activity Metrics -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Platform Activity Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <div class="p-2 bg-light rounded border">
+                            <div class="fs-4 fw-bold">@Model.TotalListings</div>
+                            <div class="small text-muted">Books Listed</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 bg-light rounded border">
+                            <div class="fs-4 fw-bold">@Model.TotalSentRequests</div>
+                            <div class="small text-muted">Requests Sent</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 bg-light rounded border">
+                            <div class="fs-4 fw-bold">@Model.CompletedExchanges</div>
+                            <div class="small text-muted">Completed Trades</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Effective Permissions Matrix -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Effective Permissions Matrix</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var perm in Model.EffectivePermissions)
+                    {
+                        <span class="badge bg-secondary-subtle text-dark border">@perm</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

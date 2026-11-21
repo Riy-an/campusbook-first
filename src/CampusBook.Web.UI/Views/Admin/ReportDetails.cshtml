@@ -1,0 +1,96 @@
+@model CampusBook.Entities.Report
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Report #{Model.ReportId} Details";
+}
+
+<div class="mb-3">
+    <a asp-action="Reports" class="btn btn-sm btn-link text-decoration-none px-0">&larr; Back to Reports</a>
+    <h2 class="h4 fw-bold">Investigation: Report #@Model.ReportId</h2>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Complaint Particulars</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row small mb-0">
+                    <dt class="col-sm-3 text-muted">Target Type</dt>
+                    <dd class="col-sm-9"><span class="badge bg-light text-dark border">@Model.TargetType</span></dd>
+
+                    <dt class="col-sm-3 text-muted">Target Record ID</dt>
+                    <dd class="col-sm-9">
+                        #@Model.TargetId
+                        @if (Model.TargetType == CampusBook.Entities.ReportTargetType.Book)
+                        {
+                            <a asp-action="BookDetails" asp-route-id="@Model.TargetId" class="ms-2 small">Inspect Book &rarr;</a>
+                        }
+                        else if (Model.TargetType == CampusBook.Entities.ReportTargetType.User)
+                        {
+                            <a asp-action="StudentDetails" asp-route-id="@Model.TargetId" class="ms-2 small">Inspect Student &rarr;</a>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-3 text-muted">Reason</dt>
+                    <dd class="col-sm-9 fw-bold">@Model.Reason</dd>
+
+                    <dt class="col-sm-3 text-muted">Description</dt>
+                    <dd class="col-sm-9">@Model.Description</dd>
+
+                    <dt class="col-sm-3 text-muted">Reporter</dt>
+                    <dd class="col-sm-9">@Model.Reporter?.FullName (@Model.Reporter?.Email)</dd>
+
+                    <dt class="col-sm-3 text-muted">Submitted</dt>
+                    <dd class="col-sm-9">@Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm") UTC</dd>
+
+                    <dt class="col-sm-3 text-muted">Status</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge @(Model.Status == CampusBook.Entities.ReportStatus.Resolved ? "bg-success" : (Model.Status == CampusBook.Entities.ReportStatus.Pending ? "bg-warning text-dark" : "bg-secondary"))">
+                            @Model.Status
+                        </span>
+                    </dd>
+
+                    @if (!string.IsNullOrEmpty(Model.ResolutionNotes))
+                    {
+                        <dt class="col-sm-3 text-muted">Resolution Notes</dt>
+                        <dd class="col-sm-9 text-success fw-bold">@Model.ResolutionNotes</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resolution Controls -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="card-title h6 fw-bold mb-0">Resolution Controls</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="ResolveReport" asp-route-id="@Model.ReportId" method="post" class="mb-3">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Resolution Notes (action taken):</label>
+                        <textarea name="resolutionNotes" class="form-control form-control-sm" rows="2" placeholder="e.g. Inappropriate listing removed and user warned..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-sm w-100" onclick="return confirm('Mark report as resolved?');">
+                        ✅ Resolve Report
+                    </button>
+                </form>
+
+                <form asp-action="DismissReport" asp-route-id="@Model.ReportId" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Dismissal Reason:</label>
+                        <textarea name="resolutionNotes" class="form-control form-control-sm" rows="2" placeholder="e.g. Complaint unfounded / duplicate..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm w-100" onclick="return confirm('Dismiss report?');">
+                        Dismiss Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

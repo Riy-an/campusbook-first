@@ -1,0 +1,119 @@
+@model CampusBook.Facade.ViewModels.Admin.AnalyticsDashboardViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Institutional Analytics";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Campus Marketplace Analytics</h2>
+        <p class="text-muted small mb-0">Platform performance, monthly volume trends, and structured CSV exports.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="ExportStudentsCsv" class="btn btn-outline-success btn-sm">Download Students CSV 📥</a>
+        <a asp-action="ExportTransactionsCsv" class="btn btn-outline-primary btn-sm">Download Transactions CSV 📥</a>
+    </div>
+</div>
+
+<!-- Key Performance Indicators -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small text-uppercase fw-bold">Student Community</div>
+            <div class="fs-3 fw-bold text-primary">@Model.TotalStudents</div>
+            <div class="small text-muted mt-1">@Model.VerifiedStudents verified accounts</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small text-uppercase fw-bold">Total Books Listed</div>
+            <div class="fs-3 fw-bold text-success">@Model.TotalBooks</div>
+            <div class="small text-muted mt-1">Across @Model.CategoryDistribution.Count subject areas</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small text-uppercase fw-bold">Completed Handovers</div>
+            <div class="fs-3 fw-bold text-info">@(Model.CompletedSales + Model.CompletedExchanges)</div>
+            <div class="small text-muted mt-1">@Model.CompletedSales sales &bull; @Model.CompletedExchanges trades</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small text-uppercase fw-bold">Total Requests Handled</div>
+            <div class="fs-3 fw-bold text-secondary">@Model.TotalRequests</div>
+            <div class="small text-muted mt-1">@Model.AcceptedRequests accepted &bull; @Model.RejectedRequests rejected</div>
+        </div>
+    </div>
+</div>
+
+<!-- Trend Breakdown Tables -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0">Monthly Registration Trends (Past 6 Months)</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Month</th>
+                            <th class="text-end">New Registrations</th>
+                        </tr>
+                    </thead>
+                    <tbody class="small">
+                        @if (Model.RegistrationTrends.Any())
+                        {
+                            @foreach (var t in Model.RegistrationTrends)
+                            {
+                                <tr>
+                                    <td>@t.Key</td>
+                                    <td class="text-end fw-bold">@t.Value students</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="2" class="text-center text-muted py-3">No registration data recorded.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0">Monthly Completed Handovers (Past 6 Months)</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Month</th>
+                            <th class="text-end">Completed Transactions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="small">
+                        @if (Model.TransactionTrends.Any())
+                        {
+                            @foreach (var t in Model.TransactionTrends)
+                            {
+                                <tr>
+                                    <td>@t.Key</td>
+                                    <td class="text-end fw-bold text-success">@t.Value handovers</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="2" class="text-center text-muted py-3">No transaction data recorded.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

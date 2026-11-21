@@ -1,4 +1,4 @@
-# CampusBook — University Book Exchange System (Phase-1 & Phase-2)
+# CampusBook — University Book Exchange System (Phase-1, Phase-2 & Administrator Module)
 
 > **Target Framework:** .NET 10.0 (`net10.0`)  
 > **Architecture Pattern:** N-Tier Layered Architecture with Facade Pattern  
@@ -13,7 +13,7 @@
 
 **CampusBook** is a university-focused web application designed for academic textbook exchange and student resale. It empowers verified university students to share textbooks they no longer need and acquire required course materials safely on campus.
 
-### Scope of Phase-1 & Phase-2
+### Scope of Phase-1, Phase-2 & Administrator Module
 
 #### Phase-1 Foundation
 - **Student Profile Management:** Viewing and editing permitted profile fields, academic affiliation (department, batch, semester), contact phone with Bangladeshi number placeholders, biography, safe profile picture uploads, university ID card photo upload with a strict maximum limit of 3 changes per student, and a privacy-preserving public profile view.
@@ -67,6 +67,44 @@
    - ASP.NET Core dynamic policy provider and server-side authorization handlers.
    - 2-minute sliding memory cache with instant cache invalidation upon privilege alteration.
 
+#### Administrator Module (Enterprise Governance & Control)
+1. **Administrative Operations Center & Real-Time Dashboard (`/admin`):**
+   - Live KPI cards: Total Students, Active vs Suspended, Verified vs Pending Verification, Total Books, Available vs Reserved vs Inactive, Active Requests vs Completed Transactions, Pending Abuse Reports.
+   - Real-time recent activity stream: newly registered students, recent listings, recent exchange requests, and flagged reports.
+   - Visual category distribution breakdown.
+2. **Student Account Governance & ID Card Verification (`/admin/students`):**
+   - Paginated student directory with full-text search (Name, Email, Student ID) and status filtering (Active/Suspended, Pending/Verified/Rejected).
+   - Detailed student dossier inspecting academic affiliation, registration date, ID card change history (capped at 3), active listings, and transaction summary.
+   - Side-by-side ID card photo modal inspection with instant 1-click **Verify** or **Reject** (with mandatory reason notes).
+   - Student **Suspension & Reactivation**: Immediate fail-closed enforcement via `user.IsActive = false` and memory cache invalidation. Self-suspension protection strictly prevents administrators from suspending their own accounts.
+3. **Book Listing Moderation (`/admin/books`):**
+   - Catalogue-wide listing inspection with filters for search, category, and status.
+   - Full details modal inspecting owner information, condition rating, pricing, and active requests.
+   - Listing moderation actions: **Approve**, **Reject** with recorded violation reason, and **Archive**.
+4. **Academic Classifications & Taxonomies (`/admin/categories`, `/admin/departments`, `/admin/courses`):**
+   - Category management: Create, edit, toggle active status, with book count association and duplicate name validation.
+   - Department management: Academic department definitions with unique code enforcement and active toggles.
+   - Course catalog: Course codes and titles linked to parent departments with active toggles.
+5. **Request & Exchange Monitoring (`/admin/requests`):**
+   - Live oversight of all platform exchange requests and sales transactions.
+   - Filter by status (`Pending`, `Accepted`, `Completed`, `Cancelled`, `Rejected`) and transaction type (`Sale`, `Exchange`).
+   - Detailed inspection of trade offers, participant identities, and meeting notes.
+   - Administrative cancellation intervention: allows admins to cancel stuck/abandoned transactions, automatically reverting reserved books back to `Available`.
+6. **Complaints, Reports & Trust Center (`/admin/reports`):**
+   - Student-facing reporting system (`/reports/create`) allowing students to report abusive users, misleading book listings, or inappropriate messages.
+   - Administrative report triage: View submitted reports, inspect reported entities, assign reports to admins, and **Resolve** (with recorded resolution notes) or **Dismiss**.
+7. **Exchange Feedback & Review Moderation (`/admin/reviews`):**
+   - Post-exchange feedback inspection displaying ratings (1-5 stars) and student comments.
+   - Content moderation controls: **Hide Review** (with recorded policy reason) and **Restore Review**.
+8. **Platform Analytics & Secure CSV Exports (`/admin/analytics`):**
+   - Comprehensive operational metrics: student verification rates, exchange completion ratios, category listing volume, and monthly transaction volumes.
+   - Sanitized CSV export endpoints (`/admin/analytics/export/students`, `/admin/analytics/export/transactions`) with header sanitization and strict exclusion of sensitive credentials (passwords, tokens).
+9. **Immutable Security Audit Trail (`/admin/audit-logs`):**
+   - Dedicated `AuditLog` entity recording all administrative actions (admin ID, action code, target entity, target ID, details, IP address, UTC timestamp, success flag).
+   - Paginated audit log search with action filtering and timestamp range queries.
+10. **Fine-Grained Permission Catalog Oversight (`/admin/permissions`):**
+    - Transparent permission catalog view grouping all 43 system permissions across Modules (Books, Requests, Wishlist, Messaging, Administration, etc.).
+
 ---
 
 ## 2. Architecture & Project Structure
@@ -77,7 +115,7 @@ The application adheres strictly to an **N-Tier Layered Architecture** with the 
 CampusBook.sln
 ├── src/
 │   ├── CampusBook.Entities/          # Domain POCO entities and business enums
-│   │   ├── Book.cs                   # Academic book listing entity
+│   │   ├── Book.cs                   # Academic book listing entity (with moderation metadata)
 │   │   ├── BookRequest.cs            # Exchange request & handover tracking entity
 │   │   ├── ExchangeOffer.cs          # Structured book-for-book trade offer entity (Phase-2)
 │   │   ├── WishlistItem.cs           # User book wishlist entity (Phase-2)
@@ -85,24 +123,28 @@ CampusBook.sln
 │   │   ├── Notification.cs           # In-app student notification entity (Phase-2)
 │   │   ├── Conversation.cs           # 1:1 request chat thread entity (Phase-2)
 │   │   ├── Message.cs                # Sanitized conversation message entity (Phase-2)
-│   │   ├── BookCategory.cs           # Subject category lookup entity
-│   │   ├── Department.cs             # Academic department lookup entity
+│   │   ├── Course.cs                 # Academic course entity linked to Department (Admin)
+│   │   ├── Report.cs                 # User/listing/message complaint report entity (Admin)
+│   │   ├── ExchangeReview.cs         # Post-exchange rating & feedback entity (Admin)
+│   │   ├── AuditLog.cs               # Immutable administrative security audit trail (Admin)
+│   │   ├── BookCategory.cs           # Subject category lookup entity (with active toggle)
+│   │   ├── Department.cs             # Academic department lookup entity (with active toggle)
 │   │   ├── Role.cs                   # Baseline authorization roles (Student, Admin)
-│   │   ├── Permission.cs             # Granular named permission entity
+│   │   ├── Permission.cs             # Granular named permission entity (43 permissions)
 │   │   ├── PermissionGroup.cs        # Role/group grouping entity (Student, Admin, Moderator)
 │   │   ├── PermissionGroupMap.cs     # Group-to-permission mapping entity (Composite PK)
 │   │   ├── UserPermission.cs         # User group assignments & direct permission overrides
-│   │   ├── StudentProfile.cs         # 1:1 user profile extension entity
-│   │   ├── User.cs                   # Student identity & credentials entity
-│   │   └── Enums...                  # BookCondition, ExchangeType, BookStatus, RequestStatus, WantedBookStatus, NotificationType
+│   │   ├── StudentProfile.cs         # 1:1 user profile extension entity (with verification tracking)
+│   │   ├── User.cs                   # Student identity & credentials entity (with suspension tracking)
+│   │   └── Enums...                  # BookCondition, ExchangeType, BookStatus, RequestStatus, StudentVerificationStatus, ReportTargetType, ReportStatus
 │   │
 │   ├── CampusBook.Framework/         # Common cross-cutting layer
-│   │   ├── UrlRewrite.cs             # Centralized compile-time route string constants
-│   │   ├── Permissions.cs            # Compile-time permission and group constants
+│   │   ├── UrlRewrite.cs             # Centralized compile-time route string constants (including UrlRewrite.Admin.*)
+│   │   ├── Permissions.cs            # Compile-time permission and group constants (43 fine-grained permissions)
 │   │   └── Extensions.cs             # Date, price (৳), and string formatting extensions
 │   │
 │   ├── CampusBook.DataAccess/        # Persistence layer (EF Core 10.0)
-│   │   ├── ApplicationDbContext.cs   # DbContext with Fluent API, seed data & cascade rules
+│   │   ├── ApplicationDbContext.cs   # DbContext with Fluent API, deterministic seed data & cascade rules
 │   │   ├── DesignTimeDbContextFactory.cs # EF CLI migration factory
 │   │   ├── Interface/                # Repository contracts
 │   │   │   ├── IRepository.cs        # Generic base repository contract
@@ -115,7 +157,9 @@ CampusBook.sln
 │   │   │   ├── IWishlistRepository.cs
 │   │   │   ├── IWantedBookRepository.cs
 │   │   │   ├── INotificationRepository.cs
-│   │   │   └── IConversationRepository.cs
+│   │   │   ├── IConversationRepository.cs
+│   │   │   ├── IAdminRepository.cs   # Administrative aggregates, filtering, moderation & analytics
+│   │   │   └── IAuditLogRepository.cs # Immutable audit log recording and pagination
 │   │   ├── Implementation/           # Concrete repository classes
 │   │   │   ├── Repository.cs
 │   │   │   ├── UserRepository.cs
@@ -127,13 +171,16 @@ CampusBook.sln
 │   │   │   ├── WishlistRepository.cs
 │   │   │   ├── WantedBookRepository.cs
 │   │   │   ├── NotificationRepository.cs
-│   │   │   └── ConversationRepository.cs
+│   │   │   ├── ConversationRepository.cs
+│   │   │   ├── AdminRepository.cs
+│   │   │   └── AuditLogRepository.cs
 │   │   └── Migrations/               # EF Core database migrations
 │   │       ├── 20261107100229_Shahed.cs
 │   │       ├── 20261107160203_Campusbook.cs
 │   │       ├── 20261113193632_Phase2Features.cs
 │   │       ├── 20261114111904_AddIdCardChangeLimitToStudentProfile.cs
-│   │       └── 20261118041126_campusbook1.cs             # Consolidated full schema & fine-grained permissions
+│   │       ├── 20261118041126_campusbook1.cs             # Consolidated full schema & fine-grained permissions
+│   │       └── 20261121130838_AddAdminModule.cs          # Complete Administrator Module schema & static seed data
 │   │
 │   ├── CampusBook.Facade/            # Application business logic & orchestration
 │   │   ├── DependencyInjection.cs    # AddCampusBookFacade extension method & memory cache
@@ -142,7 +189,9 @@ CampusBook.sln
 │   │   │   ├── IEmailSender.cs
 │   │   │   ├── DevelopmentEmailSender.cs
 │   │   │   ├── IFileStorageService.cs
-│   │   │   └── FileStorageService.cs
+│   │   │   ├── FileStorageService.cs
+│   │   │   ├── IAuditLogService.cs   # Administrative audit logging service
+│   │   │   └── AuditLogService.cs
 │   │   ├── ViewModels/               # Dedicated DTOs preventing overposting
 │   │   │   ├── Account/              # Register, Login, Reset Password models
 │   │   │   ├── Books/                # Book create, edit, filter, details models
@@ -153,7 +202,8 @@ CampusBook.sln
 │   │   │   ├── Notifications/        # In-app notifications models
 │   │   │   ├── Messages/             # Conversation summary & message models
 │   │   │   ├── History/              # Completed exchange transaction models
-│   │   │   └── Dashboard/            # Real-time metrics dashboard model
+│   │   │   ├── Dashboard/            # Real-time metrics dashboard model
+│   │   │   └── Admin/                # Comprehensive Administrator ViewModels (Dashboard, Students, Moderation, Categories, Reports, Analytics, AuditLogs)
 │   │   ├── Interface/                # Facade contracts
 │   │   │   ├── IUserFacade.cs
 │   │   │   ├── IPermissionService.cs # Cached permission & assignment management contract
@@ -165,7 +215,8 @@ CampusBook.sln
 │   │   │   ├── IWantedBookFacade.cs
 │   │   │   ├── INotificationFacade.cs
 │   │   │   ├── IConversationFacade.cs
-│   │   │   └── IExchangeHistoryFacade.cs
+│   │   │   ├── IExchangeHistoryFacade.cs
+│   │   │   └── IAdminFacade.cs       # Administrative operations orchestration facade
 │   │   └── Implementation/           # Concrete facade implementations
 │   │       ├── UserFacade.cs
 │   │       ├── PermissionService.cs  # Sliding cache + instant invalidation
@@ -177,7 +228,8 @@ CampusBook.sln
 │   │       ├── WantedBookFacade.cs
 │   │       ├── NotificationFacade.cs
 │   │       ├── ConversationFacade.cs
-│   │       └── ExchangeHistoryFacade.cs
+│   │       ├── ExchangeHistoryFacade.cs
+│   │       └── AdminFacade.cs
 │   │
 │   └── CampusBook.Web.UI/            # Presentation layer (ASP.NET Core MVC)
 │       ├── Authorization/            # ASP.NET Core dynamic authorization components
@@ -185,6 +237,8 @@ CampusBook.sln
 │       │   ├── PermissionAuthorizationHandler.cs # Fail-closed policy evaluation handler
 │       │   ├── PermissionPolicyProvider.cs       # Dynamic "Permission:*" policy provider
 │       │   └── HasPermissionAttribute.cs         # Declarative controller/action attribute
+│       ├── Infrastructure/
+│       │   └── AdminSeeder.cs        # Initial admin account seeder (admin@campusbook.edu)
 │       ├── Controllers/              # Thin MVC controllers decorated with [HasPermission(...)]
 │       │   ├── AccountController.cs
 │       │   ├── ProfileController.cs
@@ -196,10 +250,15 @@ CampusBook.sln
 │       │   ├── NotificationsController.cs
 │       │   ├── MessagesController.cs
 │       │   ├── HistoryController.cs
-│       │   └── HomeController.cs
+│       │   ├── HomeController.cs
+│       │   ├── AdminController.cs    # Comprehensive 11-feature Administrator Controller
+│       │   └── ReportsController.cs  # Student-facing abuse & violation reporting controller
 │       ├── Views/                    # Razor Views with Bootstrap 5.3 & TagHelpers
+│       │   ├── Admin/                # Complete admin suite (Index, Students, Books, Categories, Departments, Courses, Requests, Reports, Reviews, Analytics, AuditLogs, Permissions)
+│       │   ├── Reports/              # Student report submission view
+│       │   └── Shared/               # _Layout.cshtml (with admin pill) and _AdminLayout.cshtml (admin sidebar)
 │       ├── wwwroot/                  # Static CSS, JS, Bootstrap, and upload folders
-│       └── Program.cs                # Startup pipeline, DI registration & security policies
+│       └── Program.cs                # Startup pipeline, DI registration, security policies & Admin seeder
 │
 └── tests/
     └── CampusBook.Tests/             # Automated test suite (xUnit, InMemory EF Core, Moq)
@@ -214,7 +273,8 @@ CampusBook.sln
         ├── NotificationTests.cs      # Creation, unread count, individual mark-read, mark-all-read
         ├── MessagingTests.cs         # Authorized chat, unauthorized rejection, XSS sanitization, read-only on complete
         ├── ExchangeHistoryTests.cs   # Completed ledger queries, sold/purchased/exchanged categorization, offer snapshots
-        └── PermissionAuthorizationTests.cs # Seed integrity, group permissions, direct overrides, fail-close, caching
+        ├── PermissionAuthorizationTests.cs # Seed integrity, group permissions, direct overrides, fail-close, caching
+        └── AdminModuleTests.cs       # Admin authorization, verification, suspension, moderation, classifications, reports, reviews, analytics, and audit logging
 ```
 
 ---
@@ -377,7 +437,7 @@ dotnet ef database update --project src/CampusBook.DataAccess --startup-project 
 ```
 
 **Key Migrations:**
-- `20261118041126_campusbook1.cs` — Complete consolidated database schema including Phase-1, Phase-2 features (Wishlist, WantedBooks, Notifications, Messages, ExchangeOffers, ID card limit) and fine-grained permissions (`Permissions`, `PermissionGroups`, `PermissionGroupMaps`, `UserPermissions`).
+- `20261118041126_campusbook1.cs` — Complete consolidated database schema including Phase-1, Phase-2 features (Wishlist, WantedBooks, Notifications, Messages, ExchangeOffers, ID card limit), fine-grained permissions (`Permissions`, `PermissionGroups`, `PermissionGroupMaps`, `UserPermissions`), and the full Administrator Module (`Courses`, `Reports`, `ExchangeReviews`, `AuditLogs`, suspension tracking on `Users`, verification tracking on `StudentProfiles`, moderation tracking on `Books`, active status toggles, and all 43 system permissions).
 
 ---
 
@@ -393,7 +453,7 @@ Run the complete test suite from the repository root:
 dotnet test CampusBook.sln
 ```
 
-### Test Suite Summary (104 Tests — 100% Passing)
+### Test Suite Summary (117 Tests — 100% Passing)
 
 | Test Suite | Total Tests | Focus Areas |
 |:---|:---:|:---|
@@ -409,7 +469,8 @@ dotnet test CampusBook.sln
 | `MessagingTests.cs` | 5 | Authorized chat between owner and requester, non-participant rejection, whitespace rejection, HTML/XSS sanitization, read-only mode upon exchange completion |
 | `ExchangeHistoryTests.cs` | 2 | Completed transactions ledger, role breakdown (Sold, Purchased, Exchanged), preservation of offered book details |
 | `PermissionAuthorizationTests.cs` | 38 | Seed integrity, default group permissions, admin full access, moderator elevation, legacy role inheritance, inactive fail-closed, direct grants/denials, sliding memory cache with instant invalidation, auto-group assignment during registration, ASP.NET Core authorization handler evaluation, and controller action attribute verification |
-| **Total** | **104** | **100% Pass Rate (0 Failures, 0 Skipped)** |
+| `AdminModuleTests.cs` | 13 | Admin authorization policies, real-time KPI aggregates, student search/filter, ID verification status transitions, account suspension/reactivation, self-suspension protection, book moderation (approve/reject/archive), category & course management, request administrative cancellation with book release, abuse report lifecycle, review moderation, sanitized CSV exports, and immutable audit log recording |
+| **Total** | **117** | **100% Pass Rate (0 Failures, 0 Skipped)** |
 
 ---
 
@@ -425,8 +486,14 @@ Open your browser and navigate to:
 - `https://localhost:7155` (HTTPS)
 - `http://localhost:5248` (HTTP)
 
-### Default Test Account Credentials
-If seeded or registered:
+### Default Administrator Credentials
+The application automatically seeds a default system administrator account upon first launch via `AdminSeeder`:
+- **Email:** `admin@campusbook.edu`
+- **Password:** `Admin@123456`
+- **Role:** Administrator (`RoleId = 2`, `PermissionGroupId = 2` — Full Access to all 43 permissions)
+- **Admin Portal Entry:** Click the **Admin Portal** button with the shield badge in the navigation bar, or navigate directly to `/admin`.
+
+### Default Student Account Setup
 - **Registration:** Any valid email address (e.g. `student@gmail.com`), University Email (`student@university.edu`), Student ID (e.g. `2026-CSE-001`), password (e.g. `Password123!`), and any sample ID card image file (PNG/JPG).
 - **Immediate Login:** No email verification link required; sign in immediately using your personal email and password.
 - **Default Permissions:** Every registered student account is immediately assigned the `Student` permission group, granting full textbook exchange, wishlist, wanted post, messaging, and profile capabilities.

@@ -1,0 +1,121 @@
+@model CampusBook.Facade.ViewModels.Admin.RequestMonitoringListViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Request & Exchange Monitoring";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Request & Transaction Monitoring</h2>
+        <p class="text-muted small mb-0">Supervise exchange requests, track reservations, and intervene if needed.</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <input type="text" name="search" value="@Model.SearchTerm" class="form-control form-control-sm" placeholder="Search by book title or student name..." />
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option value="1" selected="@(Model.Status == CampusBook.Entities.RequestStatus.Pending)">Pending</option>
+                    <option value="2" selected="@(Model.Status == CampusBook.Entities.RequestStatus.Accepted)">Accepted & Reserved</option>
+                    <option value="5" selected="@(Model.Status == CampusBook.Entities.RequestStatus.Completed)">Completed</option>
+                    <option value="3" selected="@(Model.Status == CampusBook.Entities.RequestStatus.Rejected)">Rejected</option>
+                    <option value="4" selected="@(Model.Status == CampusBook.Entities.RequestStatus.Cancelled)">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="type" class="form-select form-select-sm">
+                    <option value="">All Transaction Types</option>
+                    <option value="1" selected="@(Model.Type == CampusBook.Entities.ExchangeType.Sale)">Sale</option>
+                    <option value="2" selected="@(Model.Type == CampusBook.Entities.ExchangeType.Exchange)">Exchange</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small">
+                <tr>
+                    <th>Req #</th>
+                    <th>Requested Book</th>
+                    <th>Type</th>
+                    <th>Requester</th>
+                    <th>Listing Owner</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Requests.Any())
+                {
+                    @foreach (var r in Model.Requests)
+                    {
+                        <tr>
+                            <td>#@r.RequestId</td>
+                            <td>
+                                <div class="fw-bold">@r.Book?.Title</div>
+                            </td>
+                            <td>
+                                @if (r.Book?.ExchangeType == CampusBook.Entities.ExchangeType.Sale)
+                                {
+                                    <span class="badge bg-primary">Sale: ৳@r.Book.Price</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info text-dark">Exchange</span>
+                                }
+                            </td>
+                            <td>@r.Requester?.FullName</td>
+                            <td>@r.Book?.Owner?.FullName</td>
+                            <td>
+                                <span class="badge @(r.Status == CampusBook.Entities.RequestStatus.Completed ? "bg-success" : (r.Status == CampusBook.Entities.RequestStatus.Accepted ? "bg-info text-dark" : (r.Status == CampusBook.Entities.RequestStatus.Pending ? "bg-warning text-dark" : "bg-secondary")))">
+                                    @r.Status
+                                </span>
+                            </td>
+                            <td class="small text-muted">@r.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td class="text-end">
+                                <a asp-action="RequestDetails" asp-route-id="@r.RequestId" class="btn btn-sm btn-outline-primary">
+                                    Details &rarr;
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            No requests found matching the filter.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-3">
+        <ul class="pagination pagination-sm justify-content-center">
+            @for (int p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.PageIndex ? "active" : "")">
+                    <a class="page-link" asp-action="Requests" asp-route-page="@p" asp-route-search="@Model.SearchTerm" asp-route-status="@Model.Status" asp-route-type="@Model.Type">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

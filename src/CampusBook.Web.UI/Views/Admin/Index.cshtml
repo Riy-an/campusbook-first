@@ -1,0 +1,233 @@
+@model CampusBook.Facade.ViewModels.Admin.AdminDashboardViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Administrative Overview</h2>
+        <p class="text-muted small mb-0">System metrics, real-time activity, and campus operations.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Analytics" class="btn btn-outline-primary btn-sm">Full Analytics 📈</a>
+        <a asp-action="AuditLogs" class="btn btn-outline-secondary btn-sm">Security Audit 📜</a>
+    </div>
+</div>
+
+<!-- Primary Metric Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm bg-primary text-white p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-uppercase small fw-bold opacity-75">Students</div>
+                    <div class="fs-3 fw-bold">@Model.TotalStudents</div>
+                    <div class="small mt-1">@Model.ActiveStudents Active &bull; <span class="badge bg-warning text-dark">@Model.PendingVerificationStudents Pending</span></div>
+                </div>
+                <div class="fs-1 opacity-50">👨‍🎓</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm bg-success text-white p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-uppercase small fw-bold opacity-75">Book Listings</div>
+                    <div class="fs-3 fw-bold">@Model.TotalBooks</div>
+                    <div class="small mt-1">@Model.AvailableBooks Available &bull; @Model.ReservedBooks Reserved</div>
+                </div>
+                <div class="fs-1 opacity-50">📚</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm bg-info text-dark p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-uppercase small fw-bold opacity-75">Completed Trades</div>
+                    <div class="fs-3 fw-bold">@(Model.CompletedSales + Model.CompletedExchanges)</div>
+                    <div class="small mt-1">@Model.CompletedSales Sales &bull; @Model.CompletedExchanges Exchanges</div>
+                </div>
+                <div class="fs-1 opacity-50">🤝</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm bg-danger text-white p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-uppercase small fw-bold opacity-75">Complaints & Flags</div>
+                    <div class="fs-3 fw-bold">@Model.TotalReports</div>
+                    <div class="small mt-1"><span class="badge bg-light text-danger">@Model.PendingReports Pending Review</span></div>
+                </div>
+                <div class="fs-1 opacity-50">⚠️</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Metrics Breakdown -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 h-100">
+            <h6 class="fw-bold mb-3 text-secondary">Student Account Statuses</h6>
+            <ul class="list-group list-group-flush small">
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span>Verified Accounts</span>
+                    <span class="badge bg-success">@Model.VerifiedStudents</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span>Pending Verification</span>
+                    <span class="badge bg-warning text-dark">@Model.PendingVerificationStudents</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span>Rejected Verification</span>
+                    <span class="badge bg-secondary">@Model.RejectedVerificationStudents</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span>Suspended Accounts</span>
+                    <span class="badge bg-danger">@Model.SuspendedStudents</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 h-100">
+            <h6 class="fw-bold mb-3 text-secondary">Request & Handover Funnel</h6>
+            <ul class="list-group list-group-flush small">
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span>Pending Requests</span>
+                    <span class="badge bg-warning text-dark">@Model.PendingRequests</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span>Accepted & Reserved</span>
+                    <span class="badge bg-info text-dark">@Model.AcceptedRequests</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span>Completed Handovers</span>
+                    <span class="badge bg-success">@Model.CompletedRequests</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span>Rejected / Cancelled</span>
+                    <span class="badge bg-secondary">@(Model.RejectedRequests + Model.CancelledRequests)</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 h-100">
+            <h6 class="fw-bold mb-3 text-secondary">Category Distribution</h6>
+            @if (Model.CategoryDistribution.Any())
+            {
+                <ul class="list-group list-group-flush small">
+                    @foreach (var cat in Model.CategoryDistribution.Take(4))
+                    {
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-truncate" style="max-width: 180px;">@cat.Key</span>
+                            <span class="badge bg-light text-dark border">@cat.Value books</span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted small my-auto text-center">No categories populated yet.</p>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Tables -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0">Recent Registrations</h6>
+                <a asp-action="Students" class="btn btn-sm btn-link p-0">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Student</th>
+                            <th>ID</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody class="small">
+                        @foreach (var s in Model.RecentStudents)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="StudentDetails" asp-route-id="@s.UserId" class="fw-bold text-decoration-none text-dark">
+                                        @s.FullName
+                                    </a>
+                                    <div class="text-muted" style="font-size: 11px;">@s.Email</div>
+                                </td>
+                                <td>@s.StudentId</td>
+                                <td>
+                                    @if (s.StudentProfile?.VerificationStatus == CampusBook.Entities.StudentVerificationStatus.Verified)
+                                    {
+                                        <span class="badge bg-success">Verified</span>
+                                    }
+                                    else if (s.StudentProfile?.VerificationStatus == CampusBook.Entities.StudentVerificationStatus.Rejected)
+                                    {
+                                        <span class="badge bg-danger">Rejected</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    }
+                                </td>
+                                <td class="text-muted">@s.CreatedAt.ToString("MMM dd")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0">Recent Book Listings</h6>
+                <a asp-action="Books" class="btn btn-sm btn-link p-0">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Title</th>
+                            <th>Owner</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="small">
+                        @foreach (var b in Model.RecentBooks)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="BookDetails" asp-route-id="@b.BookId" class="fw-bold text-decoration-none text-dark">
+                                        @b.Title
+                                    </a>
+                                    <div class="text-muted" style="font-size: 11px;">@b.Author</div>
+                                </td>
+                                <td>@b.Owner?.FullName</td>
+                                <td><span class="badge bg-light text-dark border">@b.ExchangeType</span></td>
+                                <td>
+                                    <span class="badge @(b.Status == CampusBook.Entities.BookStatus.Available ? "bg-success" : (b.Status == CampusBook.Entities.BookStatus.Reserved ? "bg-warning text-dark" : "bg-secondary"))">
+                                        @b.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

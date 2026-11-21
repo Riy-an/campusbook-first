@@ -62,6 +62,9 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Ensure initial administrator account exists
+await CampusBook.Web.UI.Infrastructure.AdminSeeder.EnsureAdminUserAsync(app.Services);
+
 app.Run();
 
 // Partial class for WebApplicationFactory in integration tests

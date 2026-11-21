@@ -52,6 +52,12 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Messages" asp-action="Index">Messages 💬</a>
                             </li>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-warning fw-bold" asp-controller="Admin" asp-action="Index">🛡️ Admin</a>
+                                </li>
+                            }
                         }
                     </ul>
                     <ul class="navbar-nav ms-auto align-items-center">
@@ -68,6 +74,11 @@
                                     <span>@User.Identity.Name</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userMenu">
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <li><a class="dropdown-item fw-bold text-danger" asp-controller="Admin" asp-action="Index">🛡️ Admin Panel</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
                                     <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index">My Profile</a></li>
                                     <li><a class="dropdown-item" asp-controller="Profile" asp-action="Edit">Edit Profile</a></li>
                                     <li><a class="dropdown-item" asp-controller="History" asp-action="Index">Exchange History</a></li>
