@@ -131,7 +131,10 @@ $RECYCLE.BIN/
 .Trash-*
 
 # ---------------------------------------------------------
-# Agent / Scratch Artifacts
+# Agent / Scratch Artifacts & Knowledge Graphs
 # ---------------------------------------------------------
 .system_generated/
 scratch/
+graphify-out/
+.graphify_*
+*.graphify_*
