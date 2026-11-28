@@ -1,3 +1,7 @@
+@using Microsoft.AspNetCore.Identity
+@{
+    var hideSidebar = (ViewData["HideSidebar"] as bool?) == true;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,121 +11,316 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark navbar-campus border-bottom">
-            <div class="container">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
-                    <span class="fs-4">🎓</span>
-                    <span>CampusBook</span>
+<body class="@(hideSidebar ? "cb-no-sidebar" : "")">
+    <div class="cb-app-layout">
+        @if (!hideSidebar)
+        {
+            <!-- ==========================================
+                 Left-Side Vertical Navigation Sidebar
+                 ========================================== -->
+            <aside id="cbSidebar" class="cb-sidebar" aria-label="Main Navigation">
+            <!-- Sidebar Brand Header -->
+            <div class="cb-sidebar-brand">
+                <a class="cb-brand-link" asp-controller="Home" asp-action="Index">
+                    <span class="cb-brand-icon">🎓</span>
+                    <span class="cb-brand-text">CampusBook</span>
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
-                        aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+                <button type="button" id="cbDesktopSidebarToggle" class="cb-sidebar-toggle-btn" title="Collapse Sidebar" aria-label="Toggle Sidebar">
+                    <span class="cb-toggle-icon">◀</span>
                 </button>
-                <div class="collapse navbar-collapse" id="navbarMain">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Books" asp-action="Index">Browse Books</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="WantedBooks" asp-action="Index">Wanted Books 📢</a>
-                        </li>
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Books" asp-action="MyBooks">My Books</a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="requestsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Requests
-                                </a>
-                                <ul class="dropdown-menu shadow" aria-labelledby="requestsDropdown">
-                                    <li><a class="dropdown-item" asp-controller="Requests" asp-action="Sent">My Sent Requests</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Requests" asp-action="Received">Requests for My Books</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" asp-controller="History" asp-action="Index">Exchange History 📜</a></li>
-                                </ul>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Wishlist" asp-action="Index">Wishlist 💖</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Messages" asp-action="Index">Messages 💬</a>
-                            </li>
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-warning fw-bold" asp-controller="Admin" asp-action="Index">🛡️ Admin</a>
-                                </li>
-                            }
-                        }
-                    </ul>
-                    <ul class="navbar-nav ms-auto align-items-center">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item me-2">
-                                <a class="nav-link position-relative text-white px-2" asp-controller="Notifications" asp-action="Index" title="Notifications">
-                                    <span class="fs-5">🔔</span>
-                                </a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-white d-flex align-items-center gap-2" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <span class="badge bg-primary">Student</span>
-                                    <span>@User.Identity.Name</span>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userMenu">
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <li><a class="dropdown-item fw-bold text-danger" asp-controller="Admin" asp-action="Index">🛡️ Admin Panel</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                    }
-                                    <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index">My Profile</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Profile" asp-action="Edit">Edit Profile</a></li>
-                                    <li><a class="dropdown-item" asp-controller="History" asp-action="Index">Exchange History</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Wishlist" asp-action="Index">Saved Books</a></li>
-                                    <li><a class="dropdown-item" asp-controller="WantedBooks" asp-action="MyPosts">My Wanted Posts</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <form asp-controller="Account" asp-action="Logout" method="post" class="px-2 py-1">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">Sign Out</button>
-                                        </form>
-                                    </li>
-                                </ul>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Account" asp-action="Login">Sign In</a>
-                            </li>
-                            <li class="nav-item ms-lg-2">
-                                <a class="btn btn-warning btn-sm text-dark fw-bold px-3 py-1 my-1" asp-controller="Account" asp-action="Register">Register</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
             </div>
-        </nav>
-    </header>
 
-    <main role="main" class="container py-4">
-        <partial name="_AlertMessages" />
-        @RenderBody()
-    </main>
+            <!-- Scrollable Navigation Items -->
+            <div class="cb-sidebar-nav">
+                <!-- Category: DISCOVER -->
+                <div class="cb-nav-category">Discover</div>
+                <ul class="cb-nav-list">
+                    <li>
+                        <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Books" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" 
+                           asp-controller="Books" asp-action="Index" title="Browse Books">
+                            <span class="cb-nav-icon">📚</span>
+                            <span class="cb-nav-label">Browse Books</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "WantedBooks" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" 
+                           asp-controller="WantedBooks" asp-action="Index" title="Wanted Books">
+                            <span class="cb-nav-icon">📢</span>
+                            <span class="cb-nav-label">Wanted Books</span>
+                        </a>
+                    </li>
+                </ul>
 
-    <footer class="bg-white border-top py-4 mt-auto text-muted small">
-        <div class="container text-center">
-            <p class="mb-1">&copy; @DateTime.UtcNow.Year CampusBook &mdash; University Book Exchange System.</p>
-            <p class="mb-0 text-muted">Facilitating affordable textbook resale and book-for-book exchanges for verified university students.</p>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <!-- Category: EXCHANGE HUB -->
+                    <div class="cb-nav-category">Exchange Hub</div>
+                    <ul class="cb-nav-list">
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")" 
+                               asp-controller="Dashboard" asp-action="Index" title="Dashboard">
+                                <span class="cb-nav-icon">📊</span>
+                                <span class="cb-nav-label">Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Books" && ViewContext.RouteData.Values["action"]?.ToString() == "MyBooks" ? "active" : "")" 
+                               asp-controller="Books" asp-action="MyBooks" title="My Book Listings">
+                                <span class="cb-nav-icon">📖</span>
+                                <span class="cb-nav-label">My Books</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Requests" && ViewContext.RouteData.Values["action"]?.ToString() == "Received" ? "active" : "")" 
+                               asp-controller="Requests" asp-action="Received" title="Incoming Requests">
+                                <span class="cb-nav-icon">📥</span>
+                                <span class="cb-nav-label">Incoming Requests</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Requests" && ViewContext.RouteData.Values["action"]?.ToString() == "Sent" ? "active" : "")" 
+                               asp-controller="Requests" asp-action="Sent" title="Sent Requests">
+                                <span class="cb-nav-icon">📤</span>
+                                <span class="cb-nav-label">Sent Requests</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "History" ? "active" : "")" 
+                               asp-controller="History" asp-action="Index" title="Exchange History">
+                                <span class="cb-nav-icon">📜</span>
+                                <span class="cb-nav-label">Exchange History</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Wishlist" ? "active" : "")" 
+                               asp-controller="Wishlist" asp-action="Index" title="Saved Wishlist">
+                                <span class="cb-nav-icon">💖</span>
+                                <span class="cb-nav-label">Wishlist</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Messages" ? "active" : "")" 
+                               asp-controller="Messages" asp-action="Index" title="Direct Messaging">
+                                <span class="cb-nav-icon">💬</span>
+                                <span class="cb-nav-label">Messages</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <!-- Category: ADMINISTRATION -->
+                        <div class="cb-nav-category">Administration</div>
+                        <ul class="cb-nav-list">
+                            <li>
+                                <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")" 
+                                   asp-controller="Admin" asp-action="Index" title="Admin Portal">
+                                    <span class="cb-nav-icon" style="background: rgba(245, 158, 11, 0.15); color: #b45309;">🛡️</span>
+                                    <span class="cb-nav-label text-warning fw-bold">Admin Portal</span>
+                                    <span class="cb-nav-badge badge bg-warning text-dark">Panel</span>
+                                </a>
+                            </li>
+                        </ul>
+                    }
+                }
+
+                <!-- Category: ACCOUNT & SUPPORT -->
+                <div class="cb-nav-category">Account & Support</div>
+                <ul class="cb-nav-list">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profile" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" 
+                               asp-controller="Profile" asp-action="Index" title="My Profile">
+                                <span class="cb-nav-icon">👤</span>
+                                <span class="cb-nav-label">My Profile</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profile" && ViewContext.RouteData.Values["action"]?.ToString() == "Edit" ? "active" : "")" 
+                               asp-controller="Profile" asp-action="Edit" title="Edit Profile">
+                                <span class="cb-nav-icon">⚙️</span>
+                                <span class="cb-nav-label">Edit Profile</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reports" ? "active" : "")" 
+                               asp-controller="Reports" asp-action="Create" title="Submit Report">
+                                <span class="cb-nav-icon">⚠️</span>
+                                <span class="cb-nav-label">Report Issue</span>
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Account" && ViewContext.RouteData.Values["action"]?.ToString() == "Login" ? "active" : "")" 
+                               asp-controller="Account" asp-action="Login" title="Sign In">
+                                <span class="cb-nav-icon">🔑</span>
+                                <span class="cb-nav-label">Sign In</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="cb-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Account" && ViewContext.RouteData.Values["action"]?.ToString() == "Register" ? "active" : "")" 
+                               asp-controller="Account" asp-action="Register" title="Register Account">
+                                <span class="cb-nav-icon">✨</span>
+                                <span class="cb-nav-label">Register</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <!-- Sidebar Footer (User / Session Pill) -->
+            <div class="cb-sidebar-footer">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="cb-user-pill">
+                        <span class="cb-avatar-sm">
+                            @(User.Identity.Name?.Substring(0, 1).ToUpper() ?? "U")
+                        </span>
+                        <div class="cb-user-info">
+                            <div class="cb-user-name" title="@User.Identity.Name">@User.Identity.Name</div>
+                            <div class="cb-user-role">
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <span class="badge bg-warning text-dark py-0 px-2" style="font-size: 0.65rem;">Administrator</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-primary py-0 px-2" style="font-size: 0.65rem;">Verified Student</span>
+                                }
+                            </div>
+                        </div>
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0 p-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="cb-icon-btn" title="Sign Out" style="width: 34px; height: 34px; font-size: 0.85rem;">
+                                🚪
+                            </button>
+                        </form>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-neu btn-sm w-100">Sign In</a>
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-sm w-100">Register</a>
+                    </div>
+                }
+            </div>
+        </aside>
+
+        <!-- Mobile Drawer Backdrop Overlay -->
+        <div id="cbSidebarBackdrop" class="cb-backdrop" aria-hidden="true"></div>
+        }
+
+        <!-- ==========================================
+             Main Wrapper (Topbar + Content + Footer)
+             ========================================== -->
+        <div class="cb-main-wrapper @(hideSidebar ? "cb-main-fullwidth" : "")">
+            <!-- Topbar Sticky Header -->
+            <header class="cb-topbar">
+                <div class="cb-topbar-left">
+                    @if (hideSidebar)
+                    {
+                        <!-- Brand logo in topbar for fullwidth landing page -->
+                        <a class="cb-brand-link" asp-controller="Home" asp-action="Index">
+                            <span class="cb-brand-icon">🎓</span>
+                            <span class="cb-brand-text">CampusBook</span>
+                        </a>
+                        <nav class="d-none d-md-flex align-items-center gap-3 ms-4">
+                            <a asp-controller="Books" asp-action="Index" class="text-decoration-none fw-semibold text-secondary small">Browse Books</a>
+                            <a asp-controller="WantedBooks" asp-action="Index" class="text-decoration-none fw-semibold text-secondary small">Wanted Posts</a>
+                        </nav>
+                    }
+                    else
+                    {
+                        <button type="button" id="cbMobileSidebarToggle" class="cb-mobile-toggle" aria-label="Open Sidebar Menu">
+                            ☰
+                        </button>
+                        <h1 class="cb-page-header-title d-none d-sm-block">
+                            @(ViewData["Title"] ?? "CampusBook")
+                        </h1>
+                    }
+                </div>
+
+                <div class="cb-topbar-right">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <!-- Quick Action: Publish Book -->
+                        <a asp-controller="Books" asp-action="Create" class="btn btn-primary btn-sm d-none d-md-inline-flex">
+                            <span>+</span>
+                            <span>Publish Book</span>
+                        </a>
+
+                        <!-- Notifications Bell Pill -->
+                        <a asp-controller="Notifications" asp-action="Index" class="cb-icon-btn" title="Notifications">
+                            <span>🔔</span>
+                        </a>
+
+                        <!-- User Profile Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-neu btn-sm dropdown-toggle d-flex align-items-center gap-2 py-1 px-2" 
+                                    type="button" id="topbarUserDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="cb-avatar-sm" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                                    @(User.Identity.Name?.Substring(0, 1).ToUpper() ?? "U")
+                                </span>
+                                <span class="fw-bold d-none d-md-inline" style="font-size: 0.88rem;">@User.Identity.Name</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="topbarUserDropdown">
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <li><a class="dropdown-item fw-bold text-warning" asp-controller="Admin" asp-action="Index">🛡️ Admin Portal</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                }
+                                <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index">My Profile</a></li>
+                                <li><a class="dropdown-item" asp-controller="Profile" asp-action="Edit">Edit Profile</a></li>
+                                <li><a class="dropdown-item" asp-controller="Books" asp-action="MyBooks">My Book Listings</a></li>
+                                <li><a class="dropdown-item" asp-controller="History" asp-action="Index">Exchange History</a></li>
+                                <li><a class="dropdown-item" asp-controller="Wishlist" asp-action="Index">Saved Wishlist</a></li>
+                                <li><a class="dropdown-item" asp-controller="WantedBooks" asp-action="MyPosts">My Wanted Posts</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="px-2 py-1">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-danger btn-sm w-100">Sign Out</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center gap-2">
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-neu btn-sm">Sign In</a>
+                            <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-sm">Register</a>
+                        </div>
+                    }
+                </div>
+            </header>
+
+            <!-- Main RenderBody Content -->
+            <main role="main" class="cb-content-body">
+                <partial name="_AlertMessages" />
+                @RenderBody()
+            </main>
+
+            <!-- Neumorphic Footer -->
+            <footer class="cb-footer text-center">
+                <div class="container-fluid">
+                    <p class="mb-1 fw-bold text-dark">
+                        &copy; @DateTime.UtcNow.Year CampusBook &mdash; University Book Exchange System.
+                    </p>
+                    <p class="mb-0 text-muted small">
+                        Smooth Soft UI &bull; Safe peer-to-peer textbook resale and academic book exchanges for verified university students.
+                    </p>
+                </div>
+            </footer>
         </div>
-    </footer>
+    </div>
 
-    <script src="~/lib/jquery/dist/jquery.mi n.js"></script>
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

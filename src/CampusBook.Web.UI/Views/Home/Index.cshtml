@@ -1,21 +1,22 @@
 @{
     ViewData["Title"] = "CampusBook - University Book Exchange System";
+    ViewData["HideSidebar"] = true;
 }
 
-<!-- Hero Section -->
-<div class="hero-banner text-center py-5">
+<!-- Hero Section with Soft Glowing Gradient -->
+<div class="hero-banner text-center py-5 mb-5">
     <div class="container py-lg-4">
-        <span class="badge bg-warning text-dark fw-bold px-3 py-2 mb-3">🎓 Exclusively for Verified University Students</span>
+        <span class="badge bg-warning text-dark fw-bold px-3 py-2 mb-3 shadow-sm">🎓 Exclusively for Verified University Students</span>
         <h1 class="display-4 fw-bold mb-3">Don't Let Good Books Gather Dust.</h1>
-        <p class="lead mb-4 mx-auto" style="max-width: 700px;">
+        <p class="lead mb-4 mx-auto" style="max-width: 720px; opacity: 0.95;">
             CampusBook connects university peers to buy, sell, and exchange academic textbooks safely and affordably right on campus.
         </p>
-        <div class="d-flex justify-content-center gap-3">
+        <div class="d-flex justify-content-center flex-wrap gap-3">
             <a asp-controller="Books" asp-action="Index" class="btn btn-warning btn-lg fw-bold text-dark px-4 py-2">
-                Browse Available Books
+                📚 Browse Available Books
             </a>
-            <a asp-controller="Account" asp-action="Register" class="btn btn-outline-light btn-lg px-4 py-2">
-                Register Student Account
+            <a asp-controller="Account" asp-action="Register" class="btn btn-neu btn-lg text-white px-4 py-2" style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.4);">
+                ✨ Register Student Account
             </a>
         </div>
     </div>
@@ -24,8 +25,10 @@
 <!-- Three Core Exchange Pillars -->
 <div class="row g-4 mb-5">
     <div class="col-md-4">
-        <div class="card card-campus h-100 shadow-sm text-center p-4">
-            <div class="display-4 text-warning mb-3">📢</div>
+        <div class="neu-card neu-card-hover h-100 text-center p-4">
+            <div class="stat-icon-wrapper mx-auto mb-3" style="background: #fffbeb; color: #d97706;">
+                <span class="fs-2">📢</span>
+            </div>
             <h2 class="h5 fw-bold mb-2">Wanted-Book Posts</h2>
             <p class="text-muted small mb-0">
                 Cannot find a required textbook? Publish a wanted request so classmates who own it can reach out or list it.
@@ -33,17 +36,21 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card card-campus h-100 shadow-sm text-center p-4">
-            <div class="display-4 text-primary mb-3">🏷️</div>
+        <div class="neu-card neu-card-hover h-100 text-center p-4">
+            <div class="stat-icon-wrapper mx-auto mb-3" style="background: #eef2ff; color: #4f46e5;">
+                <span class="fs-2">🏷️</span>
+            </div>
             <h2 class="h5 fw-bold mb-2">Affordable Resale</h2>
             <p class="text-muted small mb-0">
-                Buy and sell academic textbooks at fair, student-friendly rates, bypassing expensive commercial bookstores.
+                Buy and sell academic textbooks at fair, student-friendly rates in Bangladeshi Taka (৳), bypassing commercial markups.
             </p>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card card-campus h-100 shadow-sm text-center p-4">
-            <div class="display-4 text-purple mb-3">🔄</div>
+        <div class="neu-card neu-card-hover h-100 text-center p-4">
+            <div class="stat-icon-wrapper mx-auto mb-3" style="background: #f5f3ff; color: #7c3aed;">
+                <span class="fs-2">🔄</span>
+            </div>
             <h2 class="h5 fw-bold mb-2">Book-for-Book Trade</h2>
             <p class="text-muted small mb-0">
                 Swap a book from your finished courses for a required textbook in your current semester's curriculum.
@@ -52,27 +59,35 @@
     </div>
 </div>
 
-<!-- How It Works Section -->
-<div class="card card-campus shadow-sm p-4 p-md-5 mb-5 bg-white">
+<!-- How It Works Section with Soft Inset Step Badges -->
+<div class="neu-card p-4 p-md-5 mb-5">
     <h2 class="h4 fw-bold text-center mb-4">How CampusBook Works</h2>
     <div class="row g-4 text-center">
         <div class="col-md-3">
-            <div class="badge rounded-circle bg-primary fs-5 p-3 mb-3">1</div>
+            <div class="stat-icon-wrapper mx-auto mb-3" style="background: var(--cb-surface); box-shadow: var(--cb-neu-sm); color: var(--cb-primary); font-weight: 800;">
+                1
+            </div>
             <h3 class="h6 fw-bold">Register & Verify</h3>
-            <p class="small text-muted">Sign up with your university email address and Student ID to get verified.</p>
+            <p class="small text-muted">Sign up with your university email and Student ID to get verified by administrators.</p>
         </div>
         <div class="col-md-3">
-            <div class="badge rounded-circle bg-primary fs-5 p-3 mb-3">2</div>
+            <div class="stat-icon-wrapper mx-auto mb-3" style="background: var(--cb-surface); box-shadow: var(--cb-neu-sm); color: var(--cb-primary); font-weight: 800;">
+                2
+            </div>
             <h3 class="h6 fw-bold">Browse or List</h3>
-            <p class="small text-muted">Search course books by title, author, or ISBN, or publish your own used books.</p>
+            <p class="small text-muted">Search course books by title, author, or ISBN, or publish your own used books in minutes.</p>
         </div>
         <div class="col-md-3">
-            <div class="badge rounded-circle bg-primary fs-5 p-3 mb-3">3</div>
+            <div class="stat-icon-wrapper mx-auto mb-3" style="background: var(--cb-surface); box-shadow: var(--cb-neu-sm); color: var(--cb-primary); font-weight: 800;">
+                3
+            </div>
             <h3 class="h6 fw-bold">Send Exchange Request</h3>
-            <p class="small text-muted">Request the book online. The book is reserved once the owner accepts your request.</p>
+            <p class="small text-muted">Request the book online. The book is automatically reserved once the owner accepts.</p>
         </div>
         <div class="col-md-3">
-            <div class="badge rounded-circle bg-primary fs-5 p-3 mb-3">4</div>
+            <div class="stat-icon-wrapper mx-auto mb-3" style="background: var(--cb-surface); box-shadow: var(--cb-neu-sm); color: var(--cb-primary); font-weight: 800;">
+                4
+            </div>
             <h3 class="h6 fw-bold">Meet on Campus</h3>
             <p class="small text-muted">Hand over the book on campus and both confirm the exchange to finalize.</p>
         </div>

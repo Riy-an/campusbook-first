@@ -18,100 +18,100 @@
 <!-- 5 Real Database Metric Cards -->
 <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-5 g-3 mb-5">
     <div class="col">
-        <div class="stat-card shadow-sm h-100">
+        <div class="stat-card h-100">
             <div>
                 <div class="stat-number text-primary">@Model.ActiveListingsCount</div>
                 <div class="stat-label">Active Listings</div>
             </div>
-            <span class="fs-2 text-primary opacity-50">📚</span>
+            <div class="stat-icon-wrapper text-primary">📚</div>
         </div>
     </div>
     <div class="col">
-        <div class="stat-card shadow-sm h-100">
+        <div class="stat-card h-100">
             <div>
                 <div class="stat-number text-warning">@Model.ReservedListingsCount</div>
                 <div class="stat-label">Reserved Books</div>
             </div>
-            <span class="fs-2 text-warning opacity-50">⏳</span>
+            <div class="stat-icon-wrapper text-warning">⏳</div>
         </div>
     </div>
     <div class="col">
-        <div class="stat-card shadow-sm h-100">
+        <div class="stat-card h-100">
             <div>
                 <div class="stat-number text-info">@Model.PendingReceivedRequestsCount</div>
                 <div class="stat-label">Incoming Requests</div>
             </div>
-            <span class="fs-2 text-info opacity-50">📥</span>
+            <div class="stat-icon-wrapper text-info">📥</div>
         </div>
     </div>
     <div class="col">
-        <div class="stat-card shadow-sm h-100">
+        <div class="stat-card h-100">
             <div>
                 <div class="stat-number text-secondary">@Model.PendingSentRequestsCount</div>
                 <div class="stat-label">Sent Requests</div>
             </div>
-            <span class="fs-2 text-secondary opacity-50">📤</span>
+            <div class="stat-icon-wrapper text-secondary">📤</div>
         </div>
     </div>
     <div class="col">
-        <div class="stat-card shadow-sm h-100">
+        <div class="stat-card h-100">
             <div>
                 <div class="stat-number text-success">@Model.CompletedExchangesCount</div>
                 <div class="stat-label">Exchanges Done</div>
             </div>
-            <span class="fs-2 text-success opacity-50">✅</span>
+            <div class="stat-icon-wrapper text-success">✅</div>
         </div>
     </div>
 </div>
 
 <!-- Quick Navigation Bar -->
-<div class="card card-campus shadow-sm p-4 mb-5 border-0">
+<div class="neu-card p-4 mb-5 border-0">
     <h2 class="h6 fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">Quick Navigation & Workspaces</h2>
-    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-8 g-2 text-center">
+    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-8 g-3 text-center">
         <div class="col">
-            <a asp-controller="Books" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+            <a asp-controller="Books" asp-action="Index" class="btn btn-neu w-100 py-3 d-flex flex-column align-items-center">
                 <span class="fs-4 d-block mb-1">🔍</span>
                 <span class="small fw-semibold">Browse</span>
             </a>
         </div>
         <div class="col">
-            <a asp-controller="Books" asp-action="MyBooks" class="btn btn-outline-secondary w-100 py-3">
+            <a asp-controller="Books" asp-action="MyBooks" class="btn btn-neu w-100 py-3 d-flex flex-column align-items-center">
                 <span class="fs-4 d-block mb-1">📖</span>
                 <span class="small fw-semibold">My Listings</span>
             </a>
         </div>
         <div class="col">
-            <a asp-controller="Requests" asp-action="Received" class="btn btn-outline-secondary w-100 py-3">
+            <a asp-controller="Requests" asp-action="Received" class="btn btn-neu w-100 py-3 d-flex flex-column align-items-center">
                 <span class="fs-4 d-block mb-1">📥</span>
                 <span class="small fw-semibold">Requests</span>
             </a>
         </div>
         <div class="col">
-            <a asp-controller="Wishlist" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+            <a asp-controller="Wishlist" asp-action="Index" class="btn btn-neu w-100 py-3 d-flex flex-column align-items-center">
                 <span class="fs-4 d-block mb-1">💖</span>
                 <span class="small fw-semibold">Wishlist (@Model.WishlistCount)</span>
             </a>
         </div>
         <div class="col">
-            <a asp-controller="WantedBooks" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+            <a asp-controller="WantedBooks" asp-action="Index" class="btn btn-neu w-100 py-3 d-flex flex-column align-items-center">
                 <span class="fs-4 d-block mb-1">📢</span>
                 <span class="small fw-semibold">Wanted Posts</span>
             </a>
         </div>
         <div class="col">
-            <a asp-controller="Messages" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+            <a asp-controller="Messages" asp-action="Index" class="btn btn-neu w-100 py-3 d-flex flex-column align-items-center">
                 <span class="fs-4 d-block mb-1">💬</span>
                 <span class="small fw-semibold">Messages (@Model.UnreadMessagesCount)</span>
             </a>
         </div>
         <div class="col">
-            <a asp-controller="History" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+            <a asp-controller="History" asp-action="Index" class="btn btn-neu w-100 py-3 d-flex flex-column align-items-center">
                 <span class="fs-4 d-block mb-1">📜</span>
                 <span class="small fw-semibold">History</span>
             </a>
         </div>
         <div class="col">
-            <a asp-controller="Profile" asp-action="Index" class="btn btn-outline-secondary w-100 py-3">
+            <a asp-controller="Profile" asp-action="Index" class="btn btn-neu w-100 py-3 d-flex flex-column align-items-center">
                 <span class="fs-4 d-block mb-1">👤</span>
                 <span class="small fw-semibold">Profile</span>
             </a>

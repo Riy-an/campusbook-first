@@ -10,113 +10,107 @@
         <p class="text-muted small mb-0">System metrics, real-time activity, and campus operations.</p>
     </div>
     <div class="d-flex gap-2">
-        <a asp-action="Analytics" class="btn btn-outline-primary btn-sm">Full Analytics 📈</a>
-        <a asp-action="AuditLogs" class="btn btn-outline-secondary btn-sm">Security Audit 📜</a>
+        <a asp-action="Analytics" class="btn btn-neu btn-sm">Full Analytics 📈</a>
+        <a asp-action="AuditLogs" class="btn btn-neu btn-sm">Security Audit 📜</a>
     </div>
 </div>
 
 <!-- Primary Metric Cards -->
-<div class="row g-3 mb-4">
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm bg-primary text-white p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-uppercase small fw-bold opacity-75">Students</div>
-                    <div class="fs-3 fw-bold">@Model.TotalStudents</div>
-                    <div class="small mt-1">@Model.ActiveStudents Active &bull; <span class="badge bg-warning text-dark">@Model.PendingVerificationStudents Pending</span></div>
-                </div>
-                <div class="fs-1 opacity-50">👨‍🎓</div>
+<div class="row row-cols-1 row-cols-sm-2 row-cols-xl-4 g-3 mb-4">
+    <div class="col">
+        <div class="stat-card h-100">
+            <div>
+                <div class="text-uppercase small fw-bold text-muted">Students</div>
+                <div class="stat-number text-primary">@Model.TotalStudents</div>
+                <div class="small mt-1 text-muted">@Model.ActiveStudents Active &bull; <span class="badge bg-warning text-dark">@Model.PendingVerificationStudents Pending</span></div>
             </div>
+            <div class="stat-icon-wrapper text-primary">👨‍🎓</div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm bg-success text-white p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-uppercase small fw-bold opacity-75">Book Listings</div>
-                    <div class="fs-3 fw-bold">@Model.TotalBooks</div>
-                    <div class="small mt-1">@Model.AvailableBooks Available &bull; @Model.ReservedBooks Reserved</div>
-                </div>
-                <div class="fs-1 opacity-50">📚</div>
+    <div class="col">
+        <div class="stat-card h-100">
+            <div>
+                <div class="text-uppercase small fw-bold text-muted">Book Listings</div>
+                <div class="stat-number text-success">@Model.TotalBooks</div>
+                <div class="small mt-1 text-muted">@Model.AvailableBooks Available &bull; @Model.ReservedBooks Reserved</div>
             </div>
+            <div class="stat-icon-wrapper text-success">📚</div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm bg-info text-dark p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-uppercase small fw-bold opacity-75">Completed Trades</div>
-                    <div class="fs-3 fw-bold">@(Model.CompletedSales + Model.CompletedExchanges)</div>
-                    <div class="small mt-1">@Model.CompletedSales Sales &bull; @Model.CompletedExchanges Exchanges</div>
-                </div>
-                <div class="fs-1 opacity-50">🤝</div>
+    <div class="col">
+        <div class="stat-card h-100">
+            <div>
+                <div class="text-uppercase small fw-bold text-muted">Completed Trades</div>
+                <div class="stat-number text-info">@(Model.CompletedSales + Model.CompletedExchanges)</div>
+                <div class="small mt-1 text-muted">@Model.CompletedSales Sales &bull; @Model.CompletedExchanges Exchanges</div>
             </div>
+            <div class="stat-icon-wrapper text-info">🤝</div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm bg-danger text-white p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-uppercase small fw-bold opacity-75">Complaints & Flags</div>
-                    <div class="fs-3 fw-bold">@Model.TotalReports</div>
-                    <div class="small mt-1"><span class="badge bg-light text-danger">@Model.PendingReports Pending Review</span></div>
-                </div>
-                <div class="fs-1 opacity-50">⚠️</div>
+    <div class="col">
+        <div class="stat-card h-100">
+            <div>
+                <div class="text-uppercase small fw-bold text-muted">Complaints & Flags</div>
+                <div class="stat-number text-danger">@Model.TotalReports</div>
+                <div class="small mt-1 text-muted"><span class="badge bg-danger-subtle text-danger">@Model.PendingReports Pending</span></div>
             </div>
+            <div class="stat-icon-wrapper text-danger">⚠️</div>
         </div>
     </div>
 </div>
 
 <!-- Secondary Metrics Breakdown -->
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-3 h-100">
+<div class="row row-cols-1 row-cols-lg-3 g-3 mb-4">
+    <div class="col">
+        <div class="neu-card p-3 h-100">
             <h6 class="fw-bold mb-3 text-secondary">Student Account Statuses</h6>
-            <ul class="list-group list-group-flush small">
-                <li class="list-group-item d-flex justify-content-between px-0">
+            <ul class="list-group list-group-flush small bg-transparent">
+                <li class="list-group-item bg-transparent d-flex justify-content-between px-0">
                     <span>Verified Accounts</span>
                     <span class="badge bg-success">@Model.VerifiedStudents</span>
                 </li>
-                <li class="list-group-item d-flex justify-content-between px-0">
+                <li class="list-group-item bg-transparent d-flex justify-content-between px-0">
                     <span>Pending Verification</span>
                     <span class="badge bg-warning text-dark">@Model.PendingVerificationStudents</span>
                 </li>
-                <li class="list-group-item d-flex justify-content-between px-0">
+                <li class="list-group-item bg-transparent d-flex justify-content-between px-0">
                     <span>Rejected Verification</span>
                     <span class="badge bg-secondary">@Model.RejectedVerificationStudents</span>
                 </li>
-                <li class="list-group-item d-flex justify-content-between px-0">
+                <li class="list-group-item bg-transparent d-flex justify-content-between px-0">
                     <span>Suspended Accounts</span>
                     <span class="badge bg-danger">@Model.SuspendedStudents</span>
                 </li>
             </ul>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-3 h-100">
+    <div class="col">
+        <div class="neu-card p-3 h-100">
             <h6 class="fw-bold mb-3 text-secondary">Request & Handover Funnel</h6>
-            <ul class="list-group list-group-flush small">
-                <li class="list-group-item d-flex justify-content-between px-0">
+            <ul class="list-group list-group-flush small bg-transparent">
+                <li class="list-group-item bg-transparent d-flex justify-content-between px-0">
                     <span>Pending Requests</span>
                     <span class="badge bg-warning text-dark">@Model.PendingRequests</span>
                 </li>
-                <li class="list-group-item d-flex justify-content-between px-0">
+                <li class="list-group-item bg-transparent d-flex justify-content-between px-0">
                     <span>Accepted & Reserved</span>
                     <span class="badge bg-info text-dark">@Model.AcceptedRequests</span>
                 </li>
-                <li class="list-group-item d-flex justify-content-between px-0">
+                <li class="list-group-item bg-transparent d-flex justify-content-between px-0">
                     <span>Completed Handovers</span>
                     <span class="badge bg-success">@Model.CompletedRequests</span>
                 </li>
-                <li class="list-group-item d-flex justify-content-between px-0">
+                <li class="list-group-item bg-transparent d-flex justify-content-between px-0">
                     <span>Rejected / Cancelled</span>
                     <span class="badge bg-secondary">@(Model.RejectedRequests + Model.CancelledRequests)</span>
                 </li>
             </ul>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-3 h-100">
+    <div class="col">
+        <div class="neu-card p-3 h-100">
+            <h6 class="fw-bold mb-3 text-secondary">Category Distribution</h6>
+        <div class="neu-card p-3 h-100">
             <h6 class="fw-bold mb-3 text-secondary">Category Distribution</h6>
             @if (Model.CategoryDistribution.Any())
             {
@@ -139,12 +133,12 @@
 </div>
 
 <!-- Recent Activity Tables -->
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+<div class="row row-cols-1 row-cols-xl-2 g-4">
+    <div class="col">
+        <div class="neu-card border-0 h-100">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0">Recent Registrations</h6>
-                <a asp-action="Students" class="btn btn-sm btn-link p-0">View All</a>
+                <a asp-action="Students" class="btn btn-sm btn-link p-0 text-decoration-none">View All</a>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover table-sm align-middle mb-0">
@@ -190,11 +184,11 @@
         </div>
     </div>
 
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <div class="col">
+        <div class="neu-card border-0 h-100">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0">Recent Book Listings</h6>
-                <a asp-action="Books" class="btn btn-sm btn-link p-0">View All</a>
+                <a asp-action="Books" class="btn btn-sm btn-link p-0 text-decoration-none">View All</a>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover table-sm align-middle mb-0">

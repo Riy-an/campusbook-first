@@ -1,77 +1,101 @@
 @{
     Layout = "_Layout";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 }
 
-<div class="container-fluid py-3">
-    <div class="row">
-        <!-- Sidebar Navigation -->
-        <div class="col-lg-2 col-md-3 mb-4">
-            <div class="card border-0 shadow-sm sticky-top" style="top: 80px; z-index: 10;">
-                <div class="card-header bg-dark text-white fw-bold py-3 d-flex align-items-center gap-2">
-                    <span class="fs-5">🛡️</span>
-                    <span>Admin Panel</span>
+<div class="container-fluid p-0">
+    <!-- Admin Sub-Navigation Header Bar -->
+    <div class="neu-card p-3 mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 border-bottom mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fs-4">🛡️</span>
+                <div>
+                    <h2 class="h5 fw-bold mb-0">System Administration Center</h2>
+                    <span class="text-muted small">Governance, content moderation & security oversight</span>
                 </div>
-                <div class="list-group list-group-flush small">
-                    <a asp-controller="Admin" asp-action="Index" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
-                        📊 Dashboard
-                    </a>
-                    <a asp-controller="Admin" asp-action="Students" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString()?.StartsWith("Student") == true ? "active" : "")">
-                        👨‍🎓 Students
-                    </a>
-                    <a asp-controller="Admin" asp-action="Books" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString()?.StartsWith("Book") == true ? "active" : "")">
-                        📚 Book Moderation
-                    </a>
-                    <a asp-controller="Admin" asp-action="Categories" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString()?.Contains("Categor") == true ? "active" : "")">
-                        🏷️ Categories
-                    </a>
-                    <a asp-controller="Admin" asp-action="Departments" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString()?.Contains("Department") == true ? "active" : "")">
-                        🏛️ Departments
-                    </a>
-                    <a asp-controller="Admin" asp-action="Courses" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString()?.Contains("Course") == true ? "active" : "")">
-                        📖 Courses
-                    </a>
-                    <a asp-controller="Admin" asp-action="Requests" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString()?.Contains("Request") == true || ViewContext.RouteData.Values["action"]?.ToString() == "Exchanges" ? "active" : "")">
-                        🔄 Requests & Trades
-                    </a>
-                    <a asp-controller="Admin" asp-action="Reports" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString()?.Contains("Report") == true ? "active" : "")">
-                        ⚠️ Reports & Flags
-                    </a>
-                    <a asp-controller="Admin" asp-action="Reviews" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString()?.Contains("Review") == true ? "active" : "")">
-                        ⭐ Reviews
-                    </a>
-                    <a asp-controller="Admin" asp-action="Analytics" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString() == "Analytics" ? "active" : "")">
-                        📈 Analytics & Export
-                    </a>
-                    <a asp-controller="Admin" asp-action="AuditLogs" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString() == "AuditLogs" ? "active" : "")">
-                        📜 Audit Logs
-                    </a>
-                    <a asp-controller="Admin" asp-action="Permissions" class="list-group-item list-group-item-action @(ViewContext.RouteData.Values["action"]?.ToString() == "Permissions" ? "active" : "")">
-                        🔑 Permissions
-                    </a>
-                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-controller="Admin" asp-action="Analytics" class="btn btn-neu btn-sm">
+                    📈 Analytics
+                </a>
+                <a asp-controller="Admin" asp-action="AuditLogs" class="btn btn-neu btn-sm">
+                    📜 Audit Trail
+                </a>
             </div>
         </div>
 
-        <!-- Main Admin Content -->
-        <div class="col-lg-10 col-md-9">
-            @if (TempData["SuccessMessage"] != null)
-            {
-                <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-                    <strong>Success:</strong> @TempData["SuccessMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
-
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                    <strong>Error:</strong> @TempData["ErrorMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
-
-            @RenderBody()
+        <!-- Scrollable Horizontal Soft UI Tabs -->
+        <div class="d-flex gap-2 overflow-auto pb-1" style="scrollbar-width: thin;">
+            <a asp-controller="Admin" asp-action="Index" 
+               class="btn btn-sm @(currentAction == "Index" ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                📊 Dashboard
+            </a>
+            <a asp-controller="Admin" asp-action="Students" 
+               class="btn btn-sm @(currentAction.StartsWith("Student") ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                👨‍🎓 Students
+            </a>
+            <a asp-controller="Admin" asp-action="Books" 
+               class="btn btn-sm @(currentAction.StartsWith("Book") ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                📚 Book Listings
+            </a>
+            <a asp-controller="Admin" asp-action="Categories" 
+               class="btn btn-sm @(currentAction.Contains("Categor") ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                🏷️ Categories
+            </a>
+            <a asp-controller="Admin" asp-action="Departments" 
+               class="btn btn-sm @(currentAction.Contains("Department") ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                🏛️ Departments
+            </a>
+            <a asp-controller="Admin" asp-action="Courses" 
+               class="btn btn-sm @(currentAction.Contains("Course") ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                📖 Courses
+            </a>
+            <a asp-controller="Admin" asp-action="Requests" 
+               class="btn btn-sm @(currentAction.Contains("Request") || currentAction == "Exchanges" ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                🔄 Requests & Trades
+            </a>
+            <a asp-controller="Admin" asp-action="Reports" 
+               class="btn btn-sm @(currentAction.Contains("Report") ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                ⚠️ Reports & Flags
+            </a>
+            <a asp-controller="Admin" asp-action="Reviews" 
+               class="btn btn-sm @(currentAction.Contains("Review") ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                ⭐ Reviews
+            </a>
+            <a asp-controller="Admin" asp-action="Analytics" 
+               class="btn btn-sm @(currentAction == "Analytics" ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                📈 Analytics & CSV
+            </a>
+            <a asp-controller="Admin" asp-action="AuditLogs" 
+               class="btn btn-sm @(currentAction == "AuditLogs" ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                📜 Security Logs
+            </a>
+            <a asp-controller="Admin" asp-action="Permissions" 
+               class="btn btn-sm @(currentAction == "Permissions" ? "btn-primary" : "btn-neu")" style="white-space: nowrap;">
+                🔑 Permissions
+            </a>
         </div>
+    </div>
+
+    <!-- Admin Content Container -->
+    <div class="admin-content-wrapper">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>Success:</strong> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Error:</strong> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @RenderBody()
     </div>
 </div>
 
